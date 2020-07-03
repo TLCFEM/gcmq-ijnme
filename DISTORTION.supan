@@ -1,0 +1,30 @@
+# A TEST MODEL
+
+node 1 0 0
+node 3 10 0
+node 4 0 2
+node 6 10 2
+
+node 2 5.5 0
+node 5 4.5 2
+
+material Elastic2D 1 1 .0
+
+element GCMQL 1 1 2 5 4 1 1
+# element GCMQL 2 2 3 6 5 1 1
+element GCMQL 2 6 5 2 3 1 1
+
+fix2 1 P 1 4
+
+cload 1 0 .5 1 3
+cload 2 0 -.5 1 6
+
+# cload 3 0 .5 3 3 6
+
+step static 1
+
+analyze
+
+peek node 3 6
+
+exit

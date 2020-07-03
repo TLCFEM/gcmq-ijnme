@@ -1,0 +1,72 @@
+node 1 5. 5.
+node 2 0.707106769 0.707106769
+node 3 1. 0.
+node 4 5. 0.
+node 5 0. 5.
+node 6 0. 1.
+node 7 3.92677665 3.92677665
+node 8 2.8535533 2.8535533
+node 9 1.78033006 1.78033006
+node 10 0.923879504 0.382683426
+node 11 2. 0.
+node 12 3. 0.
+node 13 4. 0.
+node 14 5. 2.5
+node 15 2.5 5.
+node 16 0. 4.
+node 17 0. 3.
+node 18 0. 2.
+node 19 0.382683426 0.923879504
+node 20 3.98096991 1.97067082
+node 21 2.96193981 1.44134176
+node 22 1.9429096 0.912012577
+node 23 0.912012577 1.9429096
+node 24 1.44134176 2.96193981
+node 25 1.97067082 3.98096991
+
+element GCMQ 1 1 7 20 14 1 1 I
+element GCMQ 2 7 8 21 20 1 1 I
+element GCMQ 3 8 9 22 21 1 1 I
+element GCMQ 4 9 2 10 22 1 1 I
+element GCMQ 5 13 4 14 20 1 1 I
+element GCMQ 6 12 13 20 21 1 1 I
+element GCMQ 7 11 12 21 22 1 1 I
+element GCMQ 8 3 11 22 10 1 1 I
+element GCMQ 9 2 9 23 19 1 1 I
+element GCMQ 10 9 8 24 23 1 1 I
+element GCMQ 11 8 7 25 24 1 1 I
+element GCMQ 12 7 1 15 25 1 1 I
+element GCMQ 13 18 6 19 23 1 1 I
+element GCMQ 14 17 18 23 24 1 1 I
+element GCMQ 15 16 17 24 25 1 1 I
+element GCMQ 16 5 16 25 15 1 1 I
+
+material Bilinear2D 1 1000 .2 1.5 .02
+
+fix 1 1 5 6 16 17 18
+fix 2 2 3 4 11 12 13
+fix 3 3 3 4 11 12 13 5 6 16 17 18
+fix 4 3 1 14 15
+
+amplitude Tabular 1 LOOP2.txt
+
+displacement 1 1 .03 1 1 4 14
+ 
+plainrecorder 1 node RF1 1 4 14
+plainrecorder 2 node U1 1
+
+step static 1
+set ini_step_size .01
+set fixed_step_size 1
+set symm_mat 1
+set band_mat 1
+
+converger AbsIncreDisp 1 1E-10 50 0
+
+analyze
+
+save recorder 1 2
+peek node 8
+# plot type U1 nobar
+
+exit
