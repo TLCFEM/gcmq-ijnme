@@ -152,9 +152,7 @@ fix 2 2 3 4 17 18 19 20 21 22 23
 fix 3 3 5 6 30 31 32 33 34 35 36 3 4 17 18 19 20 21 22 23
 fix 4 3 1 24 25 26 27 28 29 
 
-amplitude Tabular 1 LOOP2.txt
-
-displacement 1 1 .03 1 1 4 24 25 26
+displacement 1 0 .03 1 1 4 24 25 26
 
 plainrecorder 1 node RF1 1 4 24 25 26
 plainrecorder 2 node U1 1
