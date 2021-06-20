@@ -4,7 +4,7 @@ This repository contains the source code and example models of paper [10.1002/nm
 
 To cite or reproduce figures in the paper, you can unzip the archive, find the corresponding figure and copy the source code in your work.
 
-The numerical examples used in the paper are developed in `suanPan`. To perform the numerical analysis, one can download and install ['suanPan'](https://github.com/TLCFEM/suanPan). Then run the model by, for example, the following command.
+The numerical examples used in the paper are developed in `suanPan`. To perform the numerical analysis, one can download and install [`suanPan`](https://github.com/TLCFEM/suanPan). Then run the model by, for example, the following command.
 
 ```ps
 suanpan -f MACNEAL.supan
