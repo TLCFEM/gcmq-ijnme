@@ -1,4 +1,4 @@
-# Generalized Conforming Mixed Quadrilateral (GCMQ)
+# A new drilling quadrilateral membrane element with high coarse-mesh accuracy using a modified Hu-Washizu principle
 
 This repository contains the source code and example models of paper [10.1002/nme.6066](https://doi.org/10.1002/nme.6066).
 
