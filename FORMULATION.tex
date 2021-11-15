@@ -1,9 +1,7 @@
 \documentclass[3p,sort&compress,review,11pt]{elsarticle}
 \bibliographystyle{elsarticle-num-names}
 \journal{IJNME}
-\usepackage{lmodern,mathpazo,amsmath,amsfonts,amssymb,siunitx,graphicx,diagbox,floatrow,booktabs,gnuplot-lua-tikz,structmech,subcaption}
-%\geometry{showframe}
-\usepackage[mathlines]{lineno}
+\usepackage{lmodern,amsmath,amsfonts,amssymb,siunitx,graphicx,diagbox,floatrow,booktabs,gnuplot-lua-tikz,structmech,subcaption,bm}
 \usepackage[ruled,vlined,nofillcomment]{algorithm2e}
 \setstructmech{linewidth=.4pt}
 \usetikzlibrary{shapes,arrows.meta}
@@ -15,17 +13,8 @@
 \newcommand*{\figref}[1]{Fig.~\ref{#1}}
 \newcommand*{\eqsref}[1]{Eq.~(\ref{#1})}
 \newcommand*{\tabref}[1]{Table~\ref{#1}}
-\newcommand*\patchAmsMathEnvironmentForLineno[1]{%
-\expandafter\let\csname old#1\expandafter\endcsname\csname #1\endcsname
-\expandafter\let\csname oldend#1\expandafter\endcsname\csname end#1\endcsname
-\renewenvironment{#1}{\linenomath\csname old#1\endcsname}{\csname oldend#1\endcsname\endlinenomath}}% 
-\newcommand*\patchMath[1]{%
-\patchAmsMathEnvironmentForLineno{#1}%
-\patchAmsMathEnvironmentForLineno{#1*}}%
-\AtBeginDocument{\patchMath{equation}\patchMath{align}\patchMath{flalign}\patchMath{alignat}\patchMath{gather}\patchMath{multline}}
-\renewcommand\linenumberfont{\normalfont\scriptsize}
-\listfiles
-\begin{document}\linenumbers
+\newcommand*{\mb}{\bm}
+\begin{document}
 \begin{abstract}
 By utilizing a modified Hu-Washizu principle, a new mixed variational framework and a corresponding high-performing four-node membrane element with drilling degrees of freedom, named as GCMQ element, are proposed. In this work, the generalized conforming concept, which is originally proposed within a displacement-based formulation, is now extended to a mixed formulation. The new element is able to handle higher-order displacement, strain, and stress distributions. The interpolations are complete up to second order for stress and strain. The enhanced strain field is optimized so that a complete cubic displacement field can be represented. For numerical integration, a five-point scheme is proposed to minimize computational cost. Compared to other four-node elements in existing literature, numerical examples show that the proposed element has a better performance regarding predictions of both displacements and internal forces, particularly under coarse meshes. The new element is also free from shear locking and volumetric locking. Due to the nature of the mixed framework, the element can be directly used in elastoplastic applications.
 \end{abstract}
@@ -59,41 +48,41 @@ The ideal membrane element that could address those shortcomings, as well as the
 This paper first discusses the definition of degrees of freedom and the decomposition of deformation, followed by a general introduction of the three-field Hu-Washizu variational basis. Based on these two aspects, a modified variational theorem is proposed to establish a proper relationship between different displacement actions. In what follows, a revised solving procedure and a simple, non-iterative algorithm are summarized for element level state determination. The interpolations of all fields are then discussed. Finally, several numerical examples and discussions, in which the proposed element shows a good performance, are presented in corresponding sections.
 \section{Deformation Decomposition}
 \subsection{Definition of Degrees of Freedom}
-For quadrilaterals, strictly speaking, there should be at least four DoFs per node (two for translations and two for independent distortions of both connected edges) to properly describe random deformation. But accounting for the compatibility with other existing elements, in this work, as a common practice, three DoFs are defined for each node: two for translation (denoted by $\mathbold{u}$ and $\mathbold{v}$) and one for rotation (denoted by $\mathbold{\theta}$).
+For quadrilaterals, strictly speaking, there should be at least four DoFs per node (two for translations and two for independent distortions of both connected edges) to properly describe random deformation. But accounting for the compatibility with other existing elements, in this work, as a common practice, three DoFs are defined for each node: two for translation (denoted by $\mb{u}$ and $\mb{v}$) and one for rotation (denoted by $\mb{\theta}$).
 
-Previous research mainly provides two simple definitions of the drilling DoF $\mathbold{\theta}$: 1) nodal rigid body rotation \citep{Allman1984} and 2) skew part of strain tensor \citep[e.g.,][]{Hughes1989,Ibrahimbegovic1990,Ibrahimbegovic1992,Ibrahimbegovic1993,Boutagouga2016}. However, those definitions have their own limitations, especially when it comes to the fully-fixed boundary condition in which case both fail to give zero value for drilling DoF. Hence a more appropriate definition should be introduced. Meanwhile, drilling displacement is expected to be decoupled from translation to simplify element formulation. By accounting for above aspects, a definition similar to the one used by \citet{Sze1992} and \citet{Long1994} is adopted in this work. An exhaustive discussion of different definitions of $\mathbold{\theta}$ can be found elsewhere \citep{Long2009}. A derivation is provided as follows to complete the definition of DoFs.
+Previous research mainly provides two simple definitions of the drilling DoF $\mb{\theta}$: 1) nodal rigid body rotation \citep{Allman1984} and 2) skew part of strain tensor \citep[e.g.,][]{Hughes1989,Ibrahimbegovic1990,Ibrahimbegovic1992,Ibrahimbegovic1993,Boutagouga2016}. However, those definitions have their own limitations, especially when it comes to the fully-fixed boundary condition in which case both fail to give zero value for drilling DoF. Hence a more appropriate definition should be introduced. Meanwhile, drilling displacement is expected to be decoupled from translation to simplify element formulation. By accounting for above aspects, a definition similar to the one used by \citet{Sze1992} and \citet{Long1994} is adopted in this work. An exhaustive discussion of different definitions of $\mb{\theta}$ can be found elsewhere \citep{Long2009}. A derivation is provided as follows to complete the definition of DoFs.
 \subsection{Derivation of Independent Rotation Field}
-Let $\mathbold{F}:\mathbold{X}\rightarrow\mathbold{x}$ be a deformation, which is independent of time $t$. Accordingly, the current deformed configuration $\mathbold{x}\in\mathbb{R}^2$ can be interpreted as the result of applying mapping $\mathbold{F}$ to the undeformed configuration $\mathbold{X}\in\mathbb{R}^2$, that is
+Let $\mb{F}:\mb{X}\rightarrow\mb{x}$ be a deformation, which is independent of time $t$. Accordingly, the current deformed configuration $\mb{x}\in\mathbb{R}^2$ can be interpreted as the result of applying mapping $\mb{F}$ to the undeformed configuration $\mb{X}\in\mathbb{R}^2$, that is
 \begin{gather}\label{eq:mapping}
-\mathbold{x=F\left(X\right)}.
+\mb{x=F\left(X\right)}.
 \end{gather}
-Similar to the multiplicative decomposition, it is feasible to decompose $\mathbold{F}$ into two phases. The first one is produced by translational DoFs, namely the translational part. The second one is generated by drilling DoFs, namely the drilling/distortion part. Let $\mathbold{T}$ and $\mathbold{D}$ denote these two parts, respectively. Then $\mathbold{F}$ can be expressed as
+Similar to the multiplicative decomposition, it is feasible to decompose $\mb{F}$ into two phases. The first one is produced by translational DoFs, namely the translational part. The second one is generated by drilling DoFs, namely the drilling/distortion part. Let $\mb{T}$ and $\mb{D}$ denote these two parts, respectively. Then $\mb{F}$ can be expressed as
 \begin{gather*}
-\mathbold{F=D\circ{}T}.
+\mb{F=D\circ{}T}.
 \end{gather*}
 
-Let $\mathbold{x}_m$ denote the intermediate configuration that is obtained by solely applying mapping $\mathbold{T}$ to $\mathbold{X}$,
+Let $\mb{x}_m$ denote the intermediate configuration that is obtained by solely applying mapping $\mb{T}$ to $\mb{X}$,
 \begin{gather*}
-\mathbold{x}_m=\mathbold{T}\left(\mathbold{X}\right)=\mathbold{X}+\mathbold{u}_t\left(\mathbold{X}\right),
+\mb{x}_m=\mb{T}\left(\mb{X}\right)=\mb{X}+\mb{u}_t\left(\mb{X}\right),
 \end{gather*}
-in which $\mathbold{u}_t$ is the translational deformation purely induced by the mapping $\mathbold{T}$. Then $\mathbold{x}$ can be expressed as a function of the intermediate configuration $\mathbold{x}_m$, through the mapping $\mathbold{D}$,
+in which $\mb{u}_t$ is the translational deformation purely induced by the mapping $\mb{T}$. Then $\mb{x}$ can be expressed as a function of the intermediate configuration $\mb{x}_m$, through the mapping $\mb{D}$,
 \begin{gather*}
-\mathbold{x}=\mathbold{D}\left(\mathbold{x}_m\right)=\mathbold{x}_m+\mathbold{u}_d\left(\mathbold{x}_m\right).
+\mb{x}=\mb{D}\left(\mb{x}_m\right)=\mb{x}_m+\mb{u}_d\left(\mb{x}_m\right).
 \end{gather*}
 
 Hence \eqsref{eq:mapping} can be expanded as
 \begin{gather}\label{eq:decompose_mapping}
-\mathbold{x}=\mathbold{F}\left(\mathbold{X}\right)=\mathbold{D}\left(\mathbold{T}\left(\mathbold{X}\right)\right)=\mathbold{X}+\mathbold{u}_t\left(\mathbold{X}\right)+\mathbold{u}_d\left(\mathbold{X}+\mathbold{u}_t\left(\mathbold{X}\right)\right).
+\mb{x}=\mb{F}\left(\mb{X}\right)=\mb{D}\left(\mb{T}\left(\mb{X}\right)\right)=\mb{X}+\mb{u}_t\left(\mb{X}\right)+\mb{u}_d\left(\mb{X}+\mb{u}_t\left(\mb{X}\right)\right).
 \end{gather}
-By using the Taylor series, one can expand the last term in \eqsref{eq:decompose_mapping} at $\mathbold{X}$ and obtain
+By using the Taylor series, one can expand the last term in \eqsref{eq:decompose_mapping} at $\mb{X}$ and obtain
 \begin{gather*}
-\mathbold{x}=\mathbold{X}+\mathbold{u}_t\left(\mathbold{X}\right)+\mathbold{u}_d\left(\mathbold{X}\right)+\nabla\mathbold{u}_d\left(\mathbold{X}\right)\cdot\mathbold{u}_t\left(\mathbold{X}\right)+o\left(\mathbold{u}_t\left(\mathbold{X}\right)\right),
+\mb{x}=\mb{X}+\mb{u}_t\left(\mb{X}\right)+\mb{u}_d\left(\mb{X}\right)+\nabla\mb{u}_d\left(\mb{X}\right)\cdot\mb{u}_t\left(\mb{X}\right)+o\left(\mb{u}_t\left(\mb{X}\right)\right),
 \end{gather*}
-where $\mathbold{u}_d$ is the drilling deformation and the last term is the Peano's remainder that stands for an infinitesimal term of higher order than $\mathbold{u}_t$. Within the framework of infinitesimal strain theory, it is reasonable to assume the deformation is sufficiently smooth that $\nabla\mathbold{u}_d\cdot\mathbold{u}_t$ is also an infinitesimal of higher order than both $\mathbold{u}_t$ and $\mathbold{u}_d$, which themselves are again higher order infinitesimals of $\mathbold{X}$. For simplicity, it is feasible to discard it, along with the remainder. By such, the total displacement field $\mathbold{u}$ can be simply written as
+where $\mb{u}_d$ is the drilling deformation and the last term is the Peano's remainder that stands for an infinitesimal term of higher order than $\mb{u}_t$. Within the framework of infinitesimal strain theory, it is reasonable to assume the deformation is sufficiently smooth that $\nabla\mb{u}_d\cdot\mb{u}_t$ is also an infinitesimal of higher order than both $\mb{u}_t$ and $\mb{u}_d$, which themselves are again higher order infinitesimals of $\mb{X}$. For simplicity, it is feasible to discard it, along with the remainder. By such, the total displacement field $\mb{u}$ can be simply written as
 \begin{gather}\label{eq:decompose_deformation}
-\mathbold{u}:=\mathbold{x}-\mathbold{X}=\mathbold{u}_t+\mathbold{u}_d.
+\mb{u}:=\mb{x}-\mb{X}=\mb{u}_t+\mb{u}_d.
 \end{gather}
-That is to say, the additional drilling deformation caused by the translational deformation is discarded, thus $\mathbold{u}_t$ and $\mathbold{u}_d$ can be deemed as independent of each other. The graphical interpretation can be seen in \figref{fig:decompose_deformation}. Such a decomposition cannot be applied in finite deformation problems, in which $\nabla\mathbold{u}_d\cdot\mathbold{u}_t$ could be significantly large. The decoupled displacement is important as it allows a great flexibility in the corresponding constructions of interpolations.
+That is to say, the additional drilling deformation caused by the translational deformation is discarded, thus $\mb{u}_t$ and $\mb{u}_d$ can be deemed as independent of each other. The graphical interpretation can be seen in \figref{fig:decompose_deformation}. Such a decomposition cannot be applied in finite deformation problems, in which $\nabla\mb{u}_d\cdot\mb{u}_t$ could be significantly large. The decoupled displacement is important as it allows a great flexibility in the corresponding constructions of interpolations.
 \begin{figure}[H]
 \centering\scriptsize
 \begin{tikzpicture}[x=2mm,y=2mm]
@@ -101,19 +90,19 @@ That is to say, the additional drilling deformation caused by the translational 
 \CoorOrigin{-5,-5}[x(\xi)][y(\eta)]{8}
 \node[single arrow,draw,minimum height=10mm,single arrow head extend=1.2mm,inner sep=.8mm]at(17.5,5){};
 \node[single arrow,draw,minimum height=10mm,single arrow head extend=1.2mm,inner sep=.8mm]at(42.5,5){};
-\node[align=center]at(17.5,8){mapping $\mathbold{T}$};
-\node[align=center]at(42.5,8){mapping $\mathbold{D}$};
+\node[align=center]at(17.5,8){mapping $\mb{T}$};
+\node[align=center]at(42.5,8){mapping $\mb{D}$};
 \node[single arrow,draw,minimum height=10mm,single arrow head extend=1.8mm,inner sep=2mm,shape border rotate=270]at(30,-4){};
 %\node at(15,5){\LARGE$=$};
 \node at(17.5,-15){\LARGE$=$};
 \node at(42.5,-15){\LARGE$+$};
-%\node[align=center]at(5,5){deformed\\configuration\\$\mathbold{X}$};
-\node[align=center]at(5,5){undeformed\\configuration\\$\mathbold{X}$};
-\node[align=center]at(30,5){intermediate\\configuration\\$\mathbold{x}_m$};
-\node[align=center]at(55,5){deformed\\configuration\\$\mathbold{x}$};
-\node[align=center]at(5,-15){deformed\\configuration\\$\mathbold{x}$};
-\node[align=center]at(30,-15){translation\\$\mathbold{u}_t$};
-\node[align=center]at(55,-15){distortion\\$\mathbold{u}_d$};
+%\node[align=center]at(5,5){deformed\\configuration\\$\mb{X}$};
+\node[align=center]at(5,5){undeformed\\configuration\\$\mb{X}$};
+\node[align=center]at(30,5){intermediate\\configuration\\$\mb{x}_m$};
+\node[align=center]at(55,5){deformed\\configuration\\$\mb{x}$};
+\node[align=center]at(5,-15){deformed\\configuration\\$\mb{x}$};
+\node[align=center]at(30,-15){translation\\$\mb{u}_t$};
+\node[align=center]at(55,-15){distortion\\$\mb{u}_d$};
 %\begin{scope}[every node/.style={circle,thick,draw,fill=white,inner sep=0,minimum size=2.5mm}]
 %\draw[thick]
 %(0-1,0)node{}to[out=\a,in=\b]
@@ -168,59 +157,59 @@ That is to say, the additional drilling deformation caused by the translational 
 \subsection{The Hu-Washizu Principle}
 The general form of the Hu-Washizu variational principle \citep{Hu1954} can be written as
 \begin{gather*}
-\varPi_{HW}\left(\mathbold{u},\mathbold{\varepsilon},\mathbold{\sigma}\right)=\int_V{}\left[W\left(\mathbold{\varepsilon}\right)+\mathbold{\sigma}^\mT\left(\nabla\mathbold{u}-\mathbold{\varepsilon}\right)\right]\md{V}-\int_V\mathbold{b}^\mT\mathbold{u}\md{V}-\int_{S_\sigma}\bar{\mathbold{t}}^\mT\mathbold{u}\md{S}-\int_{S_u}\mathbold{t}^\mT\left(\mathbold{u}-\bar{\mathbold{u}}\right)\md{S},
+\varPi_{HW}\left(\mb{u},\mb{\varepsilon},\mb{\sigma}\right)=\int_V{}\left[W\left(\mb{\varepsilon}\right)+\mb{\sigma}^\mT\left(\nabla\mb{u}-\mb{\varepsilon}\right)\right]\md{V}-\int_V\mb{b}^\mT\mb{u}\md{V}-\int_{S_\sigma}\bar{\mb{t}}^\mT\mb{u}\md{S}-\int_{S_u}\mb{t}^\mT\left(\mb{u}-\bar{\mb{u}}\right)\md{S},
 \end{gather*}
-in which $V$ denotes the volume domain, $S_\sigma$ and $S_u$ denote the corresponding boundaries, $W\left(\mathbold{\varepsilon}\right)$ is the strain energy that is normally a non-linear function of the strain $\mathbold{\varepsilon}$, $\mathbold{\sigma}$ is the stress, $\mathbold{u}$ is the displacement field and $\bar{\mathbold{u}}$ is the prescribed boundary displacement. For brevity, it is feasible to replace the body force $\mathbold{b}$ term and the boundary traction $\bar{\mathbold{t}}$ term with the symbol
+in which $V$ denotes the volume domain, $S_\sigma$ and $S_u$ denote the corresponding boundaries, $W\left(\mb{\varepsilon}\right)$ is the strain energy that is normally a non-linear function of the strain $\mb{\varepsilon}$, $\mb{\sigma}$ is the stress, $\mb{u}$ is the displacement field and $\bar{\mb{u}}$ is the prescribed boundary displacement. For brevity, it is feasible to replace the body force $\mb{b}$ term and the boundary traction $\bar{\mb{t}}$ term with the symbol
 \begin{gather*}
-\varPi_{bt}\left(\mathbold{u}\right)=\int_V\mathbold{b}^\mT\mathbold{u}\md{V}+\int_{S_\sigma}\bar{\mathbold{t}}^\mT\mathbold{u}\md{S},
+\varPi_{bt}\left(\mb{u}\right)=\int_V\mb{b}^\mT\mb{u}\md{V}+\int_{S_\sigma}\bar{\mb{t}}^\mT\mb{u}\md{S},
 \end{gather*}
-since they are normally represented by the equivalent nodal loads that can be treated separately. Meanwhile, an additional field, called the enhanced strain $\hat{\mathbold{\varepsilon}}$, can be included to further tune element performance. Accounting for above aspects, the following simplified version $\varPi_S$, can be obtained.
+since they are normally represented by the equivalent nodal loads that can be treated separately. Meanwhile, an additional field, called the enhanced strain $\hat{\mb{\varepsilon}}$, can be included to further tune element performance. Accounting for above aspects, the following simplified version $\varPi_S$, can be obtained.
 \begin{equation}\label{eq:hu_washizu_simplified}
-\varPi_S\left(\mathbold{u},\mathbold{\varepsilon},\hat{\mathbold{\varepsilon}},\mathbold{\sigma}\right)=\int_V\left[W\left(\mathbold{\varepsilon}\right)+\mathbold{\sigma}^\mT\left(\nabla\mathbold{u}+\hat{\mathbold{\varepsilon}}-\mathbold{\varepsilon}\right)\right]\md{V}-\int_{S_u}\mathbold{t}^\mT\left(\mathbold{u}-\bar{\mathbold{u}}\right)\md{S}-\varPi_{bt}\left(\mathbold{u}\right).
+\varPi_S\left(\mb{u},\mb{\varepsilon},\hat{\mb{\varepsilon}},\mb{\sigma}\right)=\int_V\left[W\left(\mb{\varepsilon}\right)+\mb{\sigma}^\mT\left(\nabla\mb{u}+\hat{\mb{\varepsilon}}-\mb{\varepsilon}\right)\right]\md{V}-\int_{S_u}\mb{t}^\mT\left(\mb{u}-\bar{\mb{u}}\right)\md{S}-\varPi_{bt}\left(\mb{u}\right).
 \end{equation}
 \subsection{A Modified Variational Principle}
-It has been shown in \eqsref{eq:decompose_deformation} that the displacement field $\mathbold{u}$ can be decomposed into two independent portions $\mathbold{u}_t$ and $\mathbold{u}_d$ over the problem domain. By definition, the drilling portion $\mathbold{u}_d$ should be related to the in-plane rotation field $\mathbold{\theta}$ via certain relationship. Similar to beam elements, one may directly express $\mathbold{\theta}$ as a function of $\nabla\mathbold{u}_d$. If so, as the conformity requires $\mathbold{\theta}$ to be continuous on element boundaries, $\mathbold{u}_d$ has to be a two dimensional interpolation with $C_1$ continuity. It is commonly known to be very difficult to construct such a function.
+It has been shown in \eqsref{eq:decompose_deformation} that the displacement field $\mb{u}$ can be decomposed into two independent portions $\mb{u}_t$ and $\mb{u}_d$ over the problem domain. By definition, the drilling portion $\mb{u}_d$ should be related to the in-plane rotation field $\mb{\theta}$ via certain relationship. Similar to beam elements, one may directly express $\mb{\theta}$ as a function of $\nabla\mb{u}_d$. If so, as the conformity requires $\mb{\theta}$ to be continuous on element boundaries, $\mb{u}_d$ has to be a two dimensional interpolation with $C_1$ continuity. It is commonly known to be very difficult to construct such a function.
 
-Instead of directly imposing the conforming condition, it is possible to handle those two requirements (conformity and $C_1$ continuity) separately. Noting that the $C_1$ continuity is only required on element boundaries, an auxiliary field, denoted by $\mathbold{u}_\theta$, that is a one-dimensional $C_1$ continuous function of $\mathbold{\theta}$ and resides only on boundaries, could be introduced. By such, the original $\mathbold{u}_d$ could simply be interpolated by any two-dimensional function and does not have to be conforming.
+Instead of directly imposing the conforming condition, it is possible to handle those two requirements (conformity and $C_1$ continuity) separately. Noting that the $C_1$ continuity is only required on element boundaries, an auxiliary field, denoted by $\mb{u}_\theta$, that is a one-dimensional $C_1$ continuous function of $\mb{\theta}$ and resides only on boundaries, could be introduced. By such, the original $\mb{u}_d$ could simply be interpolated by any two-dimensional function and does not have to be conforming.
 
-It could be noted that a proper interpolation for the translational displacement $\mathbold{u}_t$ could always be found so that
+It could be noted that a proper interpolation for the translational displacement $\mb{u}_t$ could always be found so that
 \begin{gather}\label{eq:boundary_displacement}
-\mathbold{u}_t+\mathbold{u}_\theta=\bar{\mathbold{u}}\qquad\text{on $S_u$},
+\mb{u}_t+\mb{u}_\theta=\bar{\mb{u}}\qquad\text{on $S_u$},
 \end{gather}
-given that $\mathbold{u}_\theta$ is already conforming by construction. By inserting \eqsref{eq:boundary_displacement} and \eqsref{eq:decompose_deformation} into \eqsref{eq:hu_washizu_simplified}, one obtains a new functional $\varPi_D$,
+given that $\mb{u}_\theta$ is already conforming by construction. By inserting \eqsref{eq:boundary_displacement} and \eqsref{eq:decompose_deformation} into \eqsref{eq:hu_washizu_simplified}, one obtains a new functional $\varPi_D$,
 \begin{gather}\label{eq:modified_principle}
-\varPi_D=\int_V\left[W\left(\mathbold{\varepsilon}\right)+\mathbold{\sigma}^\mT\left(\nabla\mathbold{u}+\hat{\mathbold{\varepsilon}}-\mathbold{\varepsilon}\right)\right]\md{V}+\int_{S_u}\mathbold{t}^\mT\left(\mathbold{u}_\theta-\mathbold{u}_d\right)\md{S}-\varPi_{bt},
+\varPi_D=\int_V\left[W\left(\mb{\varepsilon}\right)+\mb{\sigma}^\mT\left(\nabla\mb{u}+\hat{\mb{\varepsilon}}-\mb{\varepsilon}\right)\right]\md{V}+\int_{S_u}\mb{t}^\mT\left(\mb{u}_\theta-\mb{u}_d\right)\md{S}-\varPi_{bt},
 \end{gather}
-with $\mathbold{u}=\mathbold{u}_t+\mathbold{u}_d$ and the conforming condition $\mathbold{u}_t+\mathbold{u}_\theta=\bar{\mathbold{u}}$ on $S_u$ as an essential condition. The displacement boundary $S_u$ term in the above functional, viz.,
+with $\mb{u}=\mb{u}_t+\mb{u}_d$ and the conforming condition $\mb{u}_t+\mb{u}_\theta=\bar{\mb{u}}$ on $S_u$ as an essential condition. The displacement boundary $S_u$ term in the above functional, viz.,
 \begin{gather}\label{eq:constraint}
-\int_{S_u}\mathbold{t}^\mT\left(\mathbold{u}_\theta-\mathbold{u}_d\right)\md{S},
+\int_{S_u}\mb{t}^\mT\left(\mb{u}_\theta-\mb{u}_d\right)\md{S},
 \end{gather}
-acts as a minimum conformity constraint imposed on $\mathbold{u}_d$ and $\mathbold{u}_\theta$ that guarantees convergence.
+acts as a minimum conformity constraint imposed on $\mb{u}_d$ and $\mb{u}_\theta$ that guarantees convergence.
 \section{Element Formulation}
 \subsection{A Simplification}
-\eqsref{eq:constraint} can be further relaxed by noting that when element size approaches zero, the corresponding traction $\mathbold{t}$ approaches a constant field that can be denoted as $\mathbold{t}_c$. In which case, \eqsref{eq:constraint} can be rewritten as
+\eqsref{eq:constraint} can be further relaxed by noting that when element size approaches zero, the corresponding traction $\mb{t}$ approaches a constant field that can be denoted as $\mb{t}_c$. In which case, \eqsref{eq:constraint} can be rewritten as
 \begin{gather*}
-\int_{S_u}\mathbold{t}_c^\mT\left(\mathbold{u}_\theta-\mathbold{u}_d\right)\md{S}=\mathbold{t}_c^\mT\int_{S_u}\left(\mathbold{u}_\theta-\mathbold{u}_d\right)\md{S}.
+\int_{S_u}\mb{t}_c^\mT\left(\mb{u}_\theta-\mb{u}_d\right)\md{S}=\mb{t}_c^\mT\int_{S_u}\left(\mb{u}_\theta-\mb{u}_d\right)\md{S}.
 \end{gather*}
-To avoid treating $\mathbold{u}_d$ separately, a slightly stronger constraint can be applied, for example,
+To avoid treating $\mb{u}_d$ separately, a slightly stronger constraint can be applied, for example,
 \begin{gather}\label{eq:conforming_constraint_simplified}
-\int_{S_i}\mathbold{I}\left(\mathbold{u}_d-\mathbold{u}_\theta\right)\md{S}=\mathbold{0}\quad\text{for $i=1,2,3,4$},
+\int_{S_i}\mb{I}\left(\mb{u}_d-\mb{u}_\theta\right)\md{S}=\mb{0}\quad\text{for $i=1,2,3,4$},
 \end{gather}
-where $\mathbold{I}$ is the \num{2x2} identity matrix. It should be noted that \eqsref{eq:conforming_constraint_simplified} is applied on four edges separately, hence instead of one, eight independent constraints (two for each edge) are provided. \eqsref{eq:conforming_constraint_simplified} is in fact identical to the constraint used in GQ12 element \citep{Long1994}. This approach is known as the generalized conforming method that can be initially observed in the work by \citet{Tang1984} and \citet{Wu1987} and later utilized,  further enriched by \citet{Long1994}. Physically it means $\mathbold{u}_d$ and $\mathbold{u}_\theta$ are equivalent to each other in a weak sense on each element boundary.
+where $\mb{I}$ is the \numproduct{2x2} identity matrix. It should be noted that \eqsref{eq:conforming_constraint_simplified} is applied on four edges separately, hence instead of one, eight independent constraints (two for each edge) are provided. \eqsref{eq:conforming_constraint_simplified} is in fact identical to the constraint used in GQ12 element \citep{Long1994}. This approach is known as the generalized conforming method that can be initially observed in the work by \citet{Tang1984} and \citet{Wu1987} and later utilized,  further enriched by \citet{Long1994}. Physically it means $\mb{u}_d$ and $\mb{u}_\theta$ are equivalent to each other in a weak sense on each element boundary.
 
 In a more generic setup, \eqsref{eq:conforming_constraint_simplified} can be rewritten as
 \begin{gather}\label{eq:conforming_constraint_full}
-\int_{S_i}\mathbold{S}^n\left(\mathbold{u}_d-\mathbold{u}_\theta\right)\md{S}=\mathbold{0}\quad\text{for $i=1,2,3,4$},
+\int_{S_i}\mb{S}^n\left(\mb{u}_d-\mb{u}_\theta\right)\md{S}=\mb{0}\quad\text{for $i=1,2,3,4$},
 \end{gather}
-in which $\mathbold{S}=\mathrm{diag}(S,~S)$. \eqsref{eq:conforming_constraint_simplified} is a special case of \eqsref{eq:conforming_constraint_full} with $n=0$.
+in which $\mb{S}=\mathrm{diag}(S,~S)$. \eqsref{eq:conforming_constraint_simplified} is a special case of \eqsref{eq:conforming_constraint_full} with $n=0$.
 
-Let $\mathbold{d}$ denote the generalised interpolation parameter used in $\mathbold{u}_d$ and assume $\mathbold{u}_\theta$ to be a function of nodal rotation $\mathbold{\theta}$, it is possible to express $\mathbold{d}$ as a function of $\mathbold{\theta}$ by solving \eqsref{eq:conforming_constraint_simplified},
+Let $\mb{d}$ denote the generalised interpolation parameter used in $\mb{u}_d$ and assume $\mb{u}_\theta$ to be a function of nodal rotation $\mb{\theta}$, it is possible to express $\mb{d}$ as a function of $\mb{\theta}$ by solving \eqsref{eq:conforming_constraint_simplified},
 \begin{gather*}
-\mathbold{u}_d=f_1\left(\mathbold{d}\right)=f_1\left(f_2\left(\mathbold{\theta}\right)\right)=f_3\left(\mathbold{\theta}\right),
+\mb{u}_d=f_1\left(\mb{d}\right)=f_1\left(f_2\left(\mb{\theta}\right)\right)=f_3\left(\mb{\theta}\right),
 \end{gather*}
-although solution is not guaranteed and it also depends on the discrete form of $\mathbold{u}_d$, this part will be discussed in the subsequent section. By such, the displacement $\mathbold{u}$ can be expressed solely by nodal translations and rotations. Meanwhile, \eqsref{eq:conforming_constraint_simplified} implies that \eqsref{eq:constraint} equals to zero in a generalised conforming sense. Hence, the governing variational principle \eqsref{eq:modified_principle} falls back to
+although solution is not guaranteed and it also depends on the discrete form of $\mb{u}_d$, this part will be discussed in the subsequent section. By such, the displacement $\mb{u}$ can be expressed solely by nodal translations and rotations. Meanwhile, \eqsref{eq:conforming_constraint_simplified} implies that \eqsref{eq:constraint} equals to zero in a generalised conforming sense. Hence, the governing variational principle \eqsref{eq:modified_principle} falls back to
 \begin{gather}\label{eq:final_principle}
-\varPi_F\left(\mathbold{u},\mathbold{\varepsilon},\hat{\mathbold{\varepsilon}},\mathbold{\sigma}\right)=\int_V\left[W\left(\mathbold{\varepsilon}\right)+\mathbold{\sigma}^\mT\left(\nabla\mathbold{u}+\hat{\mathbold{\varepsilon}}-\mathbold{\varepsilon}\right)\right]\md{V}-\varPi_{bt}\left(\mathbold{u}\right),
+\varPi_F\left(\mb{u},\mb{\varepsilon},\hat{\mb{\varepsilon}},\mb{\sigma}\right)=\int_V\left[W\left(\mb{\varepsilon}\right)+\mb{\sigma}^\mT\left(\nabla\mb{u}+\hat{\mb{\varepsilon}}-\mb{\varepsilon}\right)\right]\md{V}-\varPi_{bt}\left(\mb{u}\right),
 \end{gather}
 which is adopted in the formulation of the new element. It should be mentioned that \eqsref{eq:conforming_constraint_simplified} is not the only option. \eqsref{eq:constraint} could be replaced by various generalised conforming schemes. The interested readers are referred to the monograph \citep{Long2009} for more details.
 \subsection{Solving Equations}
@@ -229,139 +218,139 @@ Since the finally adopted functional is \eqsref{eq:final_principle}, the solving
 Taking variations of \eqsref{eq:hu_washizu_simplified} gives,
 \begin{equation}\label{eq:euler_equation}
 \left\{\begin{array}{l}
-\displaystyle\int_V\va{\left(\nabla\mathbold{u}\right)}^\mT\mathbold{\sigma}~\md{V}=\va{\mathbold{u}}^\mT\vfrac{\varPi_{bt}}{\mathbold{u}},\\[3mm]
-\displaystyle\int_V\va{\mathbold{\sigma}}^\mT\left(\nabla\mathbold{u}+\hat{\mathbold{\varepsilon}}-\mathbold{\varepsilon}\right)~\md{V}=0,\\[3mm]
-\displaystyle\int_V\va{\mathbold{\varepsilon}}^\mT\left(\tilde{\mathbold{\sigma}}\left(\mathbold{\varepsilon}\right)-\mathbold{\sigma}\right)~\md{V}=0,\\[3mm]
-\displaystyle\int_V\va{\hat{\mathbold{\varepsilon}}}^\mT\mathbold{\sigma}~\md{V}=0,
+\displaystyle\int_V\va{\left(\nabla\mb{u}\right)}^\mT\mb{\sigma}~\md{V}=\va{\mb{u}}^\mT\vfrac{\varPi_{bt}}{\mb{u}},\\[3mm]
+\displaystyle\int_V\va{\mb{\sigma}}^\mT\left(\nabla\mb{u}+\hat{\mb{\varepsilon}}-\mb{\varepsilon}\right)~\md{V}=0,\\[3mm]
+\displaystyle\int_V\va{\mb{\varepsilon}}^\mT\left(\tilde{\mb{\sigma}}\left(\mb{\varepsilon}\right)-\mb{\sigma}\right)~\md{V}=0,\\[3mm]
+\displaystyle\int_V\va{\hat{\mb{\varepsilon}}}^\mT\mb{\sigma}~\md{V}=0,
 \end{array}\right.
 \end{equation}
-where $\tilde{\mathbold{\sigma}}\left(\mathbold{\varepsilon}\right)=\partial{}W\left(\mathbold{\varepsilon}\right)/\partial\mathbold{\varepsilon}$ is the stress obtained from material model. By discretising four independent fields with
+where $\tilde{\mb{\sigma}}\left(\mb{\varepsilon}\right)=\partial{}W\left(\mb{\varepsilon}\right)/\partial\mb{\varepsilon}$ is the stress obtained from material model. By discretising four independent fields with
 \begin{gather*}
-\mathbold{u}=\mathbold{\phi}_u\mathbold{q},\quad
-\mathbold{\sigma}=\mathbold{\phi}_\sigma\mathbold{\alpha},\quad
-\mathbold{\varepsilon}=\mathbold{\phi}_\varepsilon\mathbold{\beta},\quad
-\hat{\mathbold{\varepsilon}}=\mathbold{\phi}_{\hat{\varepsilon}}\mathbold{\zeta},
+\mb{u}=\mb{\phi}_u\mb{q},\quad
+\mb{\sigma}=\mb{\phi}_\sigma\mb{\alpha},\quad
+\mb{\varepsilon}=\mb{\phi}_\varepsilon\mb{\beta},\quad
+\hat{\mb{\varepsilon}}=\mb{\phi}_{\hat{\varepsilon}}\mb{\zeta},
 \end{gather*}
 \eqsref{eq:euler_equation} can also be expressed as
 \begin{gather}\label{eq:discretised_euler_equation}
 \left\{\begin{array}{l}
-\displaystyle\va{\mathbold{q}^\mT}\int_V\left(\mathbold{L}\mathbold{\phi}_u\right)^\mT\mathbold{\phi}_\sigma\mathbold{\alpha}~\md{V}=\va{\mathbold{q}}^\mT\vfrac{\varPi_{bt}}{\mathbold{q}}=\va{\mathbold{q}}^\mT\mathbold{P},\\[3mm]
-\displaystyle\va{\mathbold{\alpha}^\mT}\int_V\mathbold{\phi}_\sigma^\mT\left(\mathbold{L}\mathbold{\phi}_u\mathbold{q}+\mathbold{\phi}_{\hat{\varepsilon}}\mathbold{\zeta}-\mathbold{\phi}_\varepsilon\mathbold{\beta}\right)~\md{V}=0,\\[3mm]
-\displaystyle\va{\mathbold{\beta}^\mT}\int_V\mathbold{\phi}_\varepsilon^\mT\left(\tilde{\mathbold{\sigma}}\left(\mathbold{\varepsilon}\right)-\mathbold{\phi}_\sigma\mathbold{\alpha}\right)~\md{V}=0,\\[3mm]
-\displaystyle\va{\mathbold{\zeta}^\mT}\int_V\mathbold{\phi}_{\hat{\varepsilon}}^\mT\mathbold{\phi}_\sigma\mathbold{\alpha}~\md{V}=0.
+\displaystyle\va{\mb{q}^\mT}\int_V\left(\mb{L}\mb{\phi}_u\right)^\mT\mb{\phi}_\sigma\mb{\alpha}~\md{V}=\va{\mb{q}}^\mT\vfrac{\varPi_{bt}}{\mb{q}}=\va{\mb{q}}^\mT\mb{P},\\[3mm]
+\displaystyle\va{\mb{\alpha}^\mT}\int_V\mb{\phi}_\sigma^\mT\left(\mb{L}\mb{\phi}_u\mb{q}+\mb{\phi}_{\hat{\varepsilon}}\mb{\zeta}-\mb{\phi}_\varepsilon\mb{\beta}\right)~\md{V}=0,\\[3mm]
+\displaystyle\va{\mb{\beta}^\mT}\int_V\mb{\phi}_\varepsilon^\mT\left(\tilde{\mb{\sigma}}\left(\mb{\varepsilon}\right)-\mb{\phi}_\sigma\mb{\alpha}\right)~\md{V}=0,\\[3mm]
+\displaystyle\va{\mb{\zeta}^\mT}\int_V\mb{\phi}_{\hat{\varepsilon}}^\mT\mb{\phi}_\sigma\mb{\alpha}~\md{V}=0.
 \end{array}\right.
 \end{gather}
 The corresponding linearised equations between two adjacent iterations denoted with pseudo-time $t_n$ and $t_{n+1}$ could be obtained as
 \begin{equation}
 \left\{\begin{array}{l}
-\displaystyle\int_V\left(\mathbold{L}\mathbold{\phi}_u\right)^\mT\mathbold{\phi}_\sigma\Delta\mathbold{\alpha}~\md{V}=\mathbold{P}_{n+1}-\mathbold{P}_n,\\[3mm]
-\displaystyle\int_V\mathbold{\phi}_\sigma^\mT\left(\mathbold{L}\mathbold{\phi}_u\Delta\mathbold{q}+\mathbold{\phi}_{\hat{\varepsilon}}\Delta\mathbold{\zeta}-\mathbold{\phi}_\varepsilon\Delta\mathbold{\beta}\right)~\md{V}=\mathbold{0},\\[3mm]
-\displaystyle\int_V\mathbold{\phi}_\varepsilon^\mT\left(\tilde{\mathbold{E}}\mathbold{\phi}_\varepsilon\Delta\mathbold{\beta}-\mathbold{\phi}_\sigma\Delta\mathbold{\alpha}\right)~\md{V}=-\mathbold{Q}_n,\\[3mm]
-\displaystyle\int_V\mathbold{\phi}_{\hat{\varepsilon}}^\mT\mathbold{\phi}_\sigma\Delta\mathbold{\alpha}~\md{V}=-\mathbold{F}_n,
+\displaystyle\int_V\left(\mb{L}\mb{\phi}_u\right)^\mT\mb{\phi}_\sigma\Delta\mb{\alpha}~\md{V}=\mb{P}_{n+1}-\mb{P}_n,\\[3mm]
+\displaystyle\int_V\mb{\phi}_\sigma^\mT\left(\mb{L}\mb{\phi}_u\Delta\mb{q}+\mb{\phi}_{\hat{\varepsilon}}\Delta\mb{\zeta}-\mb{\phi}_\varepsilon\Delta\mb{\beta}\right)~\md{V}=\mb{0},\\[3mm]
+\displaystyle\int_V\mb{\phi}_\varepsilon^\mT\left(\tilde{\mb{E}}\mb{\phi}_\varepsilon\Delta\mb{\beta}-\mb{\phi}_\sigma\Delta\mb{\alpha}\right)~\md{V}=-\mb{Q}_n,\\[3mm]
+\displaystyle\int_V\mb{\phi}_{\hat{\varepsilon}}^\mT\mb{\phi}_\sigma\Delta\mb{\alpha}~\md{V}=-\mb{F}_n,
 \end{array}\right.
 \end{equation}
-in which $\mathbold{P}_{n+1}$ stands for the external load that could include contributions of nodal forces, body forces and/or surface tractions. The increment of material stress $\Delta\tilde{\mathbold{\sigma}}$ is linearised with tangent stiffness $\tilde{\mathbold{E}}$ that could also be obtained from material model,
+in which $\mb{P}_{n+1}$ stands for the external load that could include contributions of nodal forces, body forces and/or surface tractions. The increment of material stress $\Delta\tilde{\mb{\sigma}}$ is linearised with tangent stiffness $\tilde{\mb{E}}$ that could also be obtained from material model,
 \begin{gather}
-\Delta\tilde{\mathbold{\sigma}}\approx\tilde{\mathbold{E}}\Delta\mathbold{\varepsilon}=\tilde{\mathbold{E}}\mathbold{\phi}_\varepsilon\Delta\mathbold{\beta}.
+\Delta\tilde{\mb{\sigma}}\approx\tilde{\mb{E}}\Delta\mb{\varepsilon}=\tilde{\mb{E}}\mb{\phi}_\varepsilon\Delta\mb{\beta}.
 \end{gather}
-The gradient operator $\mathbold{L}$ could be expressed as
+The gradient operator $\mb{L}$ could be expressed as
 \begin{gather*}
-\mathbold{L}=\begin{bmatrix}
+\mb{L}=\begin{bmatrix}
 \partial/\partial{}x&\cdot&\partial/\partial{}y\\[3mm]
 \cdot&\partial/\partial{}y&\partial/\partial{}x
 \end{bmatrix}^\mT,
 \end{gather*}
-where $x$ and $y$ are global coordinates. Resistance $\mathbold{P}_n$, residuals $\mathbold{Q}_n$ and $\mathbold{F}_n$ are
+where $x$ and $y$ are global coordinates. Resistance $\mb{P}_n$, residuals $\mb{Q}_n$ and $\mb{F}_n$ are
 \begin{gather}
-\mathbold{P}_n=\int_V\left(\mathbold{L}\mathbold{\phi}_u\right)^\mT\mathbold{\phi}_\sigma\mathbold{\alpha}_n\md{V},\\
-\mathbold{Q}_n=\int_V\mathbold{\phi}_\varepsilon^\mT\tilde{\mathbold{\sigma}}_n-\mathbold{\phi}_\varepsilon^\mT\mathbold{\phi}_\sigma\mathbold{\alpha}_n~\md{V},\\
-\mathbold{F}_n=\int_V\mathbold{\phi}_{\hat{\varepsilon}}^\mT\mathbold{\phi}_\sigma\mathbold{\alpha}_n\md{V}.
+\mb{P}_n=\int_V\left(\mb{L}\mb{\phi}_u\right)^\mT\mb{\phi}_\sigma\mb{\alpha}_n\md{V},\\
+\mb{Q}_n=\int_V\mb{\phi}_\varepsilon^\mT\tilde{\mb{\sigma}}_n-\mb{\phi}_\varepsilon^\mT\mb{\phi}_\sigma\mb{\alpha}_n~\md{V},\\
+\mb{F}_n=\int_V\mb{\phi}_{\hat{\varepsilon}}^\mT\mb{\phi}_\sigma\mb{\alpha}_n\md{V}.
 \end{gather}
-The non-zero term $\mathbold{F}_n$ origins from a relaxed version of the fourth equation in \eqsref{eq:euler_equation}, which represents a full orthogonality condition that should be enforced on enhanced strain $\hat{\mathbold{\varepsilon}}$ so that the resulting element could pass the patch test \citep{Simo1990}. However, with such a condition, it is difficult to recover the magnitude of $\hat{\mathbold{\varepsilon}}$. Hence, instead of the original condition, a partially orthogonal one can be adopted \citep{Piltner1995}, that is
+The non-zero term $\mb{F}_n$ origins from a relaxed version of the fourth equation in \eqsref{eq:euler_equation}, which represents a full orthogonality condition that should be enforced on enhanced strain $\hat{\mb{\varepsilon}}$ so that the resulting element could pass the patch test \citep{Simo1990}. However, with such a condition, it is difficult to recover the magnitude of $\hat{\mb{\varepsilon}}$. Hence, instead of the original condition, a partially orthogonal one can be adopted \citep{Piltner1995}, that is
 \begin{gather*}
-\int_V\va{\hat{\mathbold{\varepsilon}}}^\mT\hat{\mathbold{\sigma}}\md{V}=0,
+\int_V\va{\hat{\mb{\varepsilon}}}^\mT\hat{\mb{\sigma}}\md{V}=0,
 \end{gather*}
-in which $\hat{\mathbold{\sigma}}$ is a reference stress field consists of at least three constant modes. If the adopted stress interpolation employs higher order polynomials, the original expression does not necessarily equal to zero for all non-converged iterations.
+in which $\hat{\mb{\sigma}}$ is a reference stress field consists of at least three constant modes. If the adopted stress interpolation employs higher order polynomials, the original expression does not necessarily equal to zero for all non-converged iterations.
 
 By further denoting
 \begin{gather}
 %\begin{array}{llll}
-\mathbold{H}=\int_{V}\mathbold{\phi}_\sigma^\mT\mathbold{\phi}_\varepsilon\md{V},\quad
-\tilde{\mathbold{H}}=\int_{V}\mathbold{\phi}_\varepsilon^\mT\tilde{\mathbold{E}}\mathbold{\phi}_\varepsilon\md{V},\quad
-\mathbold{M}=\int_{V}\mathbold{\phi}_\sigma^\mT\mathbold{\phi}_{\hat{\varepsilon}}\md{V},\quad
-\mathbold{N}=\int_{V}\mathbold{\phi}_\sigma^\mT\mathbold{L}\mathbold{\phi}_u\md{V},
+\mb{H}=\int_{V}\mb{\phi}_\sigma^\mT\mb{\phi}_\varepsilon\md{V},\quad
+\tilde{\mb{H}}=\int_{V}\mb{\phi}_\varepsilon^\mT\tilde{\mb{E}}\mb{\phi}_\varepsilon\md{V},\quad
+\mb{M}=\int_{V}\mb{\phi}_\sigma^\mT\mb{\phi}_{\hat{\varepsilon}}\md{V},\quad
+\mb{N}=\int_{V}\mb{\phi}_\sigma^\mT\mb{L}\mb{\phi}_u\md{V},
 %\end{array}
 \end{gather}
 the system of linear equations can be obtained as
 \begin{gather}\label{eq:solving_system}
 \begin{bmatrix}
-	\cdot        & \mathbold{N}^\mT  & \cdot                & \cdot        \\
-	\mathbold{N} & \cdot             & -\mathbold{H}        & \mathbold{M} \\
-	\cdot        & -\mathbold{H}^\mT & \tilde{\mathbold{H}} & \cdot        \\
-	\cdot        & \mathbold{M}^\mT  & \cdot                & \cdot
+	\cdot        & \mb{N}^\mT  & \cdot                & \cdot        \\
+	\mb{N} & \cdot             & -\mb{H}        & \mb{M} \\
+	\cdot        & -\mb{H}^\mT & \tilde{\mb{H}} & \cdot        \\
+	\cdot        & \mb{M}^\mT  & \cdot                & \cdot
 \end{bmatrix}\begin{bmatrix}
-\Delta\mathbold{q}\\\Delta\mathbold{\alpha}\\\Delta\mathbold{\beta}\\\Delta\mathbold{\zeta}
+\Delta\mb{q}\\\Delta\mb{\alpha}\\\Delta\mb{\beta}\\\Delta\mb{\zeta}
 \end{bmatrix}=\begin{bmatrix}
-\mathbold{P}_{n+1}-\mathbold{P}_n\\\mathbold{0}\\-\mathbold{Q}_n\\-\mathbold{F}_n
+\mb{P}_{n+1}-\mb{P}_n\\\mb{0}\\-\mb{Q}_n\\-\mb{F}_n
 \end{bmatrix}.
 \end{gather}
 \subsection{Solution Procedure}
-The traditional local iterative scheme can be adopted for solving \eqsref{eq:solving_system}. From the third equation in \eqsref{eq:solving_system}, $\Delta\mathbold{\beta}$ can be expressed as
+The traditional local iterative scheme can be adopted for solving \eqsref{eq:solving_system}. From the third equation in \eqsref{eq:solving_system}, $\Delta\mb{\beta}$ can be expressed as
 \begin{gather*}
-\Delta\mathbold{\beta}=\tilde{\mathbold{H}}^{-1}\left(\mathbold{H}^\mT\Delta\mathbold{\alpha}-\mathbold{Q}_n\right),
+\Delta\mb{\beta}=\tilde{\mb{H}}^{-1}\left(\mb{H}^\mT\Delta\mb{\alpha}-\mb{Q}_n\right),
 \end{gather*}
-assuming $\tilde{\mathbold{H}}$ is invertible, inserting it into the second equation, one obtains
+assuming $\tilde{\mb{H}}$ is invertible, inserting it into the second equation, one obtains
 \begin{gather*}
-\Delta\mathbold{\alpha}=\left(\mathbold{H}\tilde{\mathbold{H}}^{-1}\mathbold{H}^\mT\right)^{-1}\left(\mathbold{N}\Delta\mathbold{q}+\mathbold{M}\Delta\mathbold{\zeta}+\mathbold{H}\tilde{\mathbold{H}}^{-1}\mathbold{Q}_n\right).
+\Delta\mb{\alpha}=\left(\mb{H}\tilde{\mb{H}}^{-1}\mb{H}^\mT\right)^{-1}\left(\mb{N}\Delta\mb{q}+\mb{M}\Delta\mb{\zeta}+\mb{H}\tilde{\mb{H}}^{-1}\mb{Q}_n\right).
 \end{gather*}
 
-However, if $\mathbold{H}$ is square and invertible, the stress interpolation parameter $\mathbold{\alpha}$ could be directly updated according to the third equation in \eqsref{eq:discretised_euler_equation}, that is
+However, if $\mb{H}$ is square and invertible, the stress interpolation parameter $\mb{\alpha}$ could be directly updated according to the third equation in \eqsref{eq:discretised_euler_equation}, that is
 \begin{gather}\label{eq:answer_alpha}
-\mathbold{\alpha}=\mathbold{H}^{-\mT}\int_V\mathbold{\phi}_\varepsilon^\mT\tilde{\mathbold{\sigma}}\md{V}.
+\mb{\alpha}=\mb{H}^{-\mT}\int_V\mb{\phi}_\varepsilon^\mT\tilde{\mb{\sigma}}\md{V}.
 \end{gather}
-It could be seen that $\mathbold{\alpha}$ only depends on material stress $\tilde{\mathbold{\sigma}}$ and can be computed immediately after updating material state. Since stress equilibrium is enforced (by selecting proper stress field, as can be seen later), the corresponding residual simply equals to zero,
+It could be seen that $\mb{\alpha}$ only depends on material stress $\tilde{\mb{\sigma}}$ and can be computed immediately after updating material state. Since stress equilibrium is enforced (by selecting proper stress field, as can be seen later), the corresponding residual simply equals to zero,
 \begin{gather*}
-\mathbold{Q}_n=\mathbold{0}.
+\mb{Q}_n=\mb{0}.
 \end{gather*}
-Meanwhile, $\Delta\mathbold{\beta}$ can be directly obtained from the second equation as
+Meanwhile, $\Delta\mb{\beta}$ can be directly obtained from the second equation as
 \begin{gather}\label{eq:answer_beta}
-\Delta\mathbold{\beta}=\tilde{\mathbold{N}}\Delta\mathbold{q}+\tilde{\mathbold{M}}\Delta\mathbold{\zeta},
+\Delta\mb{\beta}=\tilde{\mb{N}}\Delta\mb{q}+\tilde{\mb{M}}\Delta\mb{\zeta},
 \end{gather}
-in which $\tilde{\mathbold{N}}=\mathbold{H}^{-1}\mathbold{N}$ and $\tilde{\mathbold{M}}=\mathbold{H}^{-1}\mathbold{M}$.
+in which $\tilde{\mb{N}}=\mb{H}^{-1}\mb{N}$ and $\tilde{\mb{M}}=\mb{H}^{-1}\mb{M}$.
 
 The remaining equations can be rearranged as
 \begin{gather*}
 \begin{bmatrix}
-\mathbold{U}&\mathbold{W}\\\mathbold{W}^\mT&\mathbold{V}
+\mb{U}&\mb{W}\\\mb{W}^\mT&\mb{V}
 \end{bmatrix}
 \begin{bmatrix}
-\Delta\mathbold{q}\\\Delta\mathbold{\zeta}
+\Delta\mb{q}\\\Delta\mb{\zeta}
 \end{bmatrix}=
 \begin{bmatrix}
-\mathbold{P}_{n+1}-\mathbold{P}_n\\-\mathbold{F}_n
+\mb{P}_{n+1}-\mb{P}_n\\-\mb{F}_n
 \end{bmatrix},
 \end{gather*}
 in which
 \begin{gather}\label{eq:answer_uvw}
-\mathbold{U}=\tilde{\mathbold{N}}^\mT\tilde{\mathbold{H}}\tilde{\mathbold{N}},\quad
-\mathbold{V}=\tilde{\mathbold{M}}^\mT\tilde{\mathbold{H}}\tilde{\mathbold{M}},\quad
-\mathbold{W}=\tilde{\mathbold{N}}^\mT\tilde{\mathbold{H}}\tilde{\mathbold{M}}.
+\mb{U}=\tilde{\mb{N}}^\mT\tilde{\mb{H}}\tilde{\mb{N}},\quad
+\mb{V}=\tilde{\mb{M}}^\mT\tilde{\mb{H}}\tilde{\mb{M}},\quad
+\mb{W}=\tilde{\mb{N}}^\mT\tilde{\mb{H}}\tilde{\mb{M}}.
 \end{gather}
 
 By repeating the same condensation procedure, one could obtain
 \begin{gather}\label{eq:answer_zeta}
-\Delta\mathbold{\zeta}=\mathbold{V}^{-1}\left(-\mathbold{F}_n-\mathbold{W}^\mT\Delta\mathbold{q}\right),
+\Delta\mb{\zeta}=\mb{V}^{-1}\left(-\mb{F}_n-\mb{W}^\mT\Delta\mb{q}\right),
 \end{gather}
-which leads to the final expression of equivalent stiffness $\mathbold{K}$
+which leads to the final expression of equivalent stiffness $\mb{K}$
 \begin{gather}\label{eq:answer_stiffness}
-\mathbold{K}=\mathbold{U}-\mathbold{W}\mathbold{V}^{-1}\mathbold{W}^\mT,
+\mb{K}=\mb{U}-\mb{W}\mb{V}^{-1}\mb{W}^\mT,
 \end{gather}
-while equivalent resistance $\mathbold{R}$ is
+while equivalent resistance $\mb{R}$ is
 \begin{gather}\label{eq:answer_resistance}
-\mathbold{R}=\mathbold{P}_n-\mathbold{W}\mathbold{V}^{-1}\mathbold{F}_n.
+\mb{R}=\mb{P}_n-\mb{W}\mb{V}^{-1}\mb{F}_n.
 \end{gather}
 
-It should be noted that the above procedure can largely reduce computation cost but is only valid for an invertible $\mathbold{H}$. Otherwise a standard condensation should be conducted on \eqsref{eq:solving_system}.
+It should be noted that the above procedure can largely reduce computation cost but is only valid for an invertible $\mb{H}$. Otherwise a standard condensation should be conducted on \eqsref{eq:solving_system}.
 \subsection{Implementation Algorithm}
 For state determination at element level, here a non-iterative scheme is presented in Algorithm \ref{algo:adaptive_algorithm} where $w^i$ denotes the generalized numerical integration weight that could include original integration weight, element thickness and determinant of Jacobian at each integration point.
 
@@ -373,53 +362,53 @@ The efficiency of GCMQ is not considered as a problem, especially when it runs w
 \SetKw{Compute}{compute}
 \SetKw{Update}{update}
 \SetKw{Break}{break}
-\KwIn{$\Delta\mathbold{q}$, $\mathbold{q}_n$, $\mathbold{\alpha}_n$, $\mathbold{\beta}_n$, $\mathbold{\zeta}_n$, $\mathbold{V}_n$, $\mathbold{W}_n$}
-\KwOut{$\mathbold{K}$, $\mathbold{R}$, $\mathbold{q}_{n+1}$, $\mathbold{\alpha}_{n+1}$, $\mathbold{\beta}_{n+1}$, $\mathbold{\zeta}_{n+1}$, $\mathbold{V}_{n+1}$, $\mathbold{W}_{n+1}$}
-$\mathbold{q}_{n+1}=\mathbold{q}_n+\Delta\mathbold{q}$\;
-$\Delta\mathbold{\zeta}=-\mathbold{V}^{-1}_n\mathbold{M}^\mT\mathbold{\alpha}_n-\mathbold{V}^{-1}_n\mathbold{W}_n^\mT\Delta\mathbold{q}$\tcp*[r]{counter: 12 \eqsref{eq:answer_zeta}}
-$\Delta\mathbold{\beta}=\tilde{\mathbold{N}}\Delta\mathbold{q}+\tilde{\mathbold{M}}\Delta\mathbold{\zeta}$\tcp*[r]{counter: 143 \eqsref{eq:answer_beta}}
-$\mathbold{\zeta}_{n+1}=\mathbold{\zeta}_n+\Delta\mathbold{\zeta}$\;
-$\mathbold{\beta}_{n+1}=\mathbold{\beta}_n+\Delta\mathbold{\beta}$\;
+\KwIn{$\Delta\mb{q}$, $\mb{q}_n$, $\mb{\alpha}_n$, $\mb{\beta}_n$, $\mb{\zeta}_n$, $\mb{V}_n$, $\mb{W}_n$}
+\KwOut{$\mb{K}$, $\mb{R}$, $\mb{q}_{n+1}$, $\mb{\alpha}_{n+1}$, $\mb{\beta}_{n+1}$, $\mb{\zeta}_{n+1}$, $\mb{V}_{n+1}$, $\mb{W}_{n+1}$}
+$\mb{q}_{n+1}=\mb{q}_n+\Delta\mb{q}$\;
+$\Delta\mb{\zeta}=-\mb{V}^{-1}_n\mb{M}^\mT\mb{\alpha}_n-\mb{V}^{-1}_n\mb{W}_n^\mT\Delta\mb{q}$\tcp*[r]{counter: 12 \eqsref{eq:answer_zeta}}
+$\Delta\mb{\beta}=\tilde{\mb{N}}\Delta\mb{q}+\tilde{\mb{M}}\Delta\mb{\zeta}$\tcp*[r]{counter: 143 \eqsref{eq:answer_beta}}
+$\mb{\zeta}_{n+1}=\mb{\zeta}_n+\Delta\mb{\zeta}$\;
+$\mb{\beta}_{n+1}=\mb{\beta}_n+\Delta\mb{\beta}$\;
 \ForAll{integration points}{
-$\mathbold{\varepsilon}_{n+1}^i=\mathbold{\phi}_{\varepsilon}^i\mathbold{\beta}_{n+1}$\tcp*[r]{counter: 33}
-obtain $\tilde{\mathbold{E}}_{n+1}^i$ and $\tilde{\mathbold{\sigma}}_{n+1}^i$ from the material model\;
-assemble $\displaystyle\tilde{\mathbold{H}}_{n+1}=\sum{}w^i\mathbold{\phi}_{\varepsilon}^{i,\mT}\tilde{\mathbold{E}}_{n+1}^i\mathbold{\phi}_{\varepsilon}^i$\tcp*[r]{counter: 462}
-assemble $\displaystyle\tilde{\mathbold{S}}_{n+1}=\sum{}w^i\mathbold{\phi}_\varepsilon^{i,\mT}\tilde{\mathbold{\sigma}}_{n+1}^i$\tcp*[r]{counter: 33}
+$\mb{\varepsilon}_{n+1}^i=\mb{\phi}_{\varepsilon}^i\mb{\beta}_{n+1}$\tcp*[r]{counter: 33}
+obtain $\tilde{\mb{E}}_{n+1}^i$ and $\tilde{\mb{\sigma}}_{n+1}^i$ from the material model\;
+assemble $\displaystyle\tilde{\mb{H}}_{n+1}=\sum{}w^i\mb{\phi}_{\varepsilon}^{i,\mT}\tilde{\mb{E}}_{n+1}^i\mb{\phi}_{\varepsilon}^i$\tcp*[r]{counter: 462}
+assemble $\displaystyle\tilde{\mb{S}}_{n+1}=\sum{}w^i\mb{\phi}_\varepsilon^{i,\mT}\tilde{\mb{\sigma}}_{n+1}^i$\tcp*[r]{counter: 33}
 }
-$\mathbold{\alpha}_{n+1}=\mathbold{H}^{-\mT}\tilde{\mathbold{S}}_{n+1}$\tcp*[r]{counter: 121 \eqsref{eq:answer_alpha}}
-update $\mathbold{U}_{n+1}$, $\mathbold{V}_{n+1}$ and $\mathbold{W}_{n+1}$ using $\tilde{\mathbold{H}}_{n+1}$\tcp*[r]{counter: 1850 \eqsref{eq:answer_uvw}}
-$\mathbold{K}=\mathbold{U}_{n+1}-\mathbold{W}_{n+1}\mathbold{V}^{-1}_{n+1}\mathbold{W}_{n+1}^\mT$\tcp*[r]{counter: 1716 \eqsref{eq:answer_stiffness}}
-$\mathbold{R}=\mathbold{N}\mathbold{\alpha}_{n+1}-\mathbold{W}_{n+1}\mathbold{V}_{n+1}^{-1}\mathbold{M}^\mT\mathbold{\alpha}_{n+1}$\tcp*[r]{counter: 144 \eqsref{eq:answer_resistance}}
+$\mb{\alpha}_{n+1}=\mb{H}^{-\mT}\tilde{\mb{S}}_{n+1}$\tcp*[r]{counter: 121 \eqsref{eq:answer_alpha}}
+update $\mb{U}_{n+1}$, $\mb{V}_{n+1}$ and $\mb{W}_{n+1}$ using $\tilde{\mb{H}}_{n+1}$\tcp*[r]{counter: 1850 \eqsref{eq:answer_uvw}}
+$\mb{K}=\mb{U}_{n+1}-\mb{W}_{n+1}\mb{V}^{-1}_{n+1}\mb{W}_{n+1}^\mT$\tcp*[r]{counter: 1716 \eqsref{eq:answer_stiffness}}
+$\mb{R}=\mb{N}\mb{\alpha}_{n+1}-\mb{W}_{n+1}\mb{V}_{n+1}^{-1}\mb{M}^\mT\mb{\alpha}_{n+1}$\tcp*[r]{counter: 144 \eqsref{eq:answer_resistance}}
 \caption{state determination at element level}\label{algo:adaptive_algorithm}
 \end{algorithm}
 
-It should be noted that $\mathbold{H}$, $\mathbold{M}$, $\mathbold{N}$, $\tilde{\mathbold{M}}$ and $\tilde{\mathbold{N}}$ are all constant matrices. Once the corresponding shape functions are chosen, they could be readily computed, stored and later used in analysis. Meanwhile, $\mathbold{U}$, $\mathbold{V}$ and $\mathbold{W}$ solely depend on the material tangent $\tilde{\mathbold{E}}$ that should be computed according to given strain $\mathbold{\varepsilon}$ and/or other variables. Accordingly, they could be initialized, stored and updated as element level history variables during iterations.
+It should be noted that $\mb{H}$, $\mb{M}$, $\mb{N}$, $\tilde{\mb{M}}$ and $\tilde{\mb{N}}$ are all constant matrices. Once the corresponding shape functions are chosen, they could be readily computed, stored and later used in analysis. Meanwhile, $\mb{U}$, $\mb{V}$ and $\mb{W}$ solely depend on the material tangent $\tilde{\mb{E}}$ that should be computed according to given strain $\mb{\varepsilon}$ and/or other variables. Accordingly, they could be initialized, stored and updated as element level history variables during iterations.
 \section{Construction of Interpolations}
 \subsection{Displacement}
-As a conventional approach, the translational part of displacement field $\mathbold{u}_t$ is interpolated by nodal translations via an isoparametric mapping, that is,
+As a conventional approach, the translational part of displacement field $\mb{u}_t$ is interpolated by nodal translations via an isoparametric mapping, that is,
 \begin{gather}
-\mathbold{u}_t=\begin{bmatrix}u_t&v_t\end{bmatrix}^\mT=\mathbold{\phi}_t\mathbold{q}_t,
+\mb{u}_t=\begin{bmatrix}u_t&v_t\end{bmatrix}^\mT=\mb{\phi}_t\mb{q}_t,
 \end{gather}
 in which
 \begin{gather*}
-\mathbold{\phi}_t=\begin{bmatrix}
+\mb{\phi}_t=\begin{bmatrix}
 N_1&0&N_2&0&N_3&0&N_4&0\\
 0&N_1&0&N_2&0&N_3&0&N_4
 \end{bmatrix},\\
-\mathbold{q}_t=\begin{bmatrix}
+\mb{q}_t=\begin{bmatrix}
 u_1&v_1&u_2&v_2&u_3&v_3&u_4&v_4
 \end{bmatrix}^\mT,\\
 N_i=\dfrac{1}{4}\left(1+\xi\xi_i\right)\left(1+\eta\eta_i\right)\quad\text{for}\quad{}i=1,2,3,4,
 \end{gather*}
 with $\xi_i$ and $\eta_i$ are parent coordinates of corresponding nodes.
 
-For the drilling part $\mathbold{u}_d$, the corresponding shape functions can be in fact arbitrarily chosen as no $C_1$ continuity is imposed.
+For the drilling part $\mb{u}_d$, the corresponding shape functions can be in fact arbitrarily chosen as no $C_1$ continuity is imposed.
 \begin{gather}\label{eq:interpolation_displacement}
-\mathbold{u}_d=\begin{bmatrix}u_d&v_d\end{bmatrix}^\mT=\mathbold{\phi}_d\mathbold{d}.
+\mb{u}_d=\begin{bmatrix}u_d&v_d\end{bmatrix}^\mT=\mb{\phi}_d\mb{d}.
 \end{gather}
-Since the bilinear terms have already been included in the translational part, higher order terms could be picked in $\mathbold{u}_d$. One possible choice is a serendipity-like basis. Mimicking a similar form used for $\mathbold{\phi}_t$, $\mathbold{\phi}_d$ can be written as
+Since the bilinear terms have already been included in the translational part, higher order terms could be picked in $\mb{u}_d$. One possible choice is a serendipity-like basis. Mimicking a similar form used for $\mb{\phi}_t$, $\mb{\phi}_d$ can be written as
 \begin{gather}
-\mathbold{\phi}_d=\begin{bmatrix}
+\mb{\phi}_d=\begin{bmatrix}
 \bar{N}_1&0&\bar{N}_2&0&\bar{N}_3&0&\bar{N}_4&0\\
 0&\bar{N}_1&0&\bar{N}_2&0&\bar{N}_3&0&\bar{N}_4
 \end{bmatrix},\\\label{eq:shape_function_displacement}
@@ -427,16 +416,16 @@ Since the bilinear terms have already been included in the translational part, h
 \bar{N}_1=1-\xi^2,&\bar{N}_2=\eta-\xi^2\eta,&\bar{N}_3=1-\eta^2,&\bar{N}_4=\xi-\xi\eta^2.
 \end{array}
 \end{gather}
-Accordingly, $\mathbold{d}$ consists of eight generalized interpolation parameters that do not need to possess any physical meaning, although with \eqsref{eq:shape_function_displacement}, they correspond to the displacement values of centres of four edges.
+Accordingly, $\mb{d}$ consists of eight generalized interpolation parameters that do not need to possess any physical meaning, although with \eqsref{eq:shape_function_displacement}, they correspond to the displacement values of centres of four edges.
 \begin{gather*}
-\mathbold{d}=\begin{bmatrix}
+\mb{d}=\begin{bmatrix}
 d_1&d_2&d_3&d_4&d_5&d_6&d_7&d_8
 \end{bmatrix}^\mT.
 \end{gather*}
 
-For the boundary version $\mathbold{u}_\theta$, to satisfy the imposed $C_1$ continuity requirement, it is feasible to choose the Hermite interpolation or other parametric curves (e.g., splines) as the shape functions. Here in this work a Hermite-type curve constructed by two nodal rotations $\theta_i$ are adopted. For each edge $l_j$,
+For the boundary version $\mb{u}_\theta$, to satisfy the imposed $C_1$ continuity requirement, it is feasible to choose the Hermite interpolation or other parametric curves (e.g., splines) as the shape functions. Here in this work a Hermite-type curve constructed by two nodal rotations $\theta_i$ are adopted. For each edge $l_j$,
 \begin{gather*}
-\mathbold{u}_\theta=\begin{bmatrix}w_j\end{bmatrix}=\sum_{i=1}^{2}\tilde{N}_i\theta_i,
+\mb{u}_\theta=\begin{bmatrix}w_j\end{bmatrix}=\sum_{i=1}^{2}\tilde{N}_i\theta_i,
 \end{gather*}
 in which $w_j$ is the displacement perpendicular to the edge since this is a beam-type interpolation, and
 \begin{gather*}
@@ -445,7 +434,7 @@ in which $w_j$ is the displacement perpendicular to the edge since this is a bea
 \end{gather*}
 where the edge label $l_j$ is also used to denote the length of that edge and $-1\leqslant{}s\leqslant1$ is the parent coordinate. There are several methods to transform the displacement $w_j$ from the local system to the global one as depicted in \figref{fig:coordinate_system}. Here a simple decomposition is used.
 \begin{gather}
-\mathbold{u}_\theta=\begin{bmatrix}u_\theta\\v_\theta\end{bmatrix}=w_j\begin{bmatrix}\cos\left(\psi_j+\dfrac{\pi}{2}\right)\\[2mm]\sin\left(\psi_j+\dfrac{\pi}{2}\right)\end{bmatrix}=w_j\begin{bmatrix}-\sin\psi_j\\[2mm]\cos\psi_j\end{bmatrix}.
+\mb{u}_\theta=\begin{bmatrix}u_\theta\\v_\theta\end{bmatrix}=w_j\begin{bmatrix}\cos\left(\psi_j+\dfrac{\pi}{2}\right)\\[2mm]\sin\left(\psi_j+\dfrac{\pi}{2}\right)\end{bmatrix}=w_j\begin{bmatrix}-\sin\psi_j\\[2mm]\cos\psi_j\end{bmatrix}.
 \end{gather}
 where $\psi_j$ is the inclination of the edge. Other curves may be used as substitutes. Additional internal parameters can also be introduced to further control the deformation.
 \begin{figure}[H]
@@ -472,18 +461,18 @@ where $\psi_j$ is the inclination of the edge. Other curves may be used as subst
 
 Now \eqsref{eq:conforming_constraint_simplified} can be established explicitly. It provides eight independent constraints, which can be expanded as
 \begin{gather*}
-\int_{S_1}\mathbold{u}_d~\md{S}=\int_{S_1}\mathbold{u}_\theta~\md{S},\quad
-\int_{S_2}\mathbold{u}_d~\md{S}=\int_{S_2}\mathbold{u}_\theta~\md{S},\quad
-\int_{S_3}\mathbold{u}_d~\md{S}=\int_{S_3}\mathbold{u}_\theta~\md{S},\quad
-\int_{S_4}\mathbold{u}_d~\md{S}=\int_{S_4}\mathbold{u}_\theta~\md{S}.
+\int_{S_1}\mb{u}_d~\md{S}=\int_{S_1}\mb{u}_\theta~\md{S},\quad
+\int_{S_2}\mb{u}_d~\md{S}=\int_{S_2}\mb{u}_\theta~\md{S},\\
+\int_{S_3}\mb{u}_d~\md{S}=\int_{S_3}\mb{u}_\theta~\md{S},\quad
+\int_{S_4}\mb{u}_d~\md{S}=\int_{S_4}\mb{u}_\theta~\md{S}.
 \end{gather*}
-The integrations can be performed analytically for both $\mathbold{u}_\theta$ and $\mathbold{u}_d$. By collecting all equations and rearranging them into a matrix form, one obtains
+The integrations can be performed analytically for both $\mb{u}_\theta$ and $\mb{u}_d$. By collecting all equations and rearranging them into a matrix form, one obtains
 \begin{gather}
-\mathbold{G}\mathbold{d}=\mathbold{Q}\mathbold{\theta},
+\mb{G}\mb{d}=\mb{Q}\mb{\theta},
 \end{gather}
-with $\mathbold{\theta}=\begin{bmatrix}\theta_1&\theta_2&\theta_3&\theta_4\end{bmatrix}^\mT$, $\mathbold{G}$ and $\mathbold{Q}$ are explicitly shown as in \eqsref{eq:interpolation_conforming}.
+with $\mb{\theta}=\begin{bmatrix}\theta_1&\theta_2&\theta_3&\theta_4\end{bmatrix}^\mT$, $\mb{G}$ and $\mb{Q}$ are explicitly shown as in \eqsref{eq:interpolation_conforming}.
 \begin{gather}\label{eq:interpolation_conforming}
-\underset{\num{8x4}}{\mathbold{Q}}=\int_{-1}^{1}\text{diag}\begin{pmatrix}
+\underset{\numproduct{8x4}}{\mb{Q}}=\int_{-1}^{1}\text{diag}\begin{pmatrix}
 -\sin\psi_1\\\cos\psi_1\\-\sin\psi_2\\\cos\psi_2\\-\sin\psi_3\\\cos\psi_3\\-\sin\psi_4\\\cos\psi_4
 \end{pmatrix}\cdot\begin{bmatrix}
 \tilde{N}_1&\tilde{N}_2&\cdot&\cdot\\
@@ -495,94 +484,94 @@ with $\mathbold{\theta}=\begin{bmatrix}\theta_1&\theta_2&\theta_3&\theta_4\end{b
 \tilde{N}_2&\cdot&\cdot&\tilde{N}_1\\
 \tilde{N}_2&\cdot&\cdot&\tilde{N}_1\\
 \end{bmatrix}\md{s},\qquad
-\underset{\num{8x8}}{\mathbold{G}}=\begin{bmatrix}
-\displaystyle\int_{-1}^{1}\mathbold{\phi}_d\Big|_{\eta=-1}~\md{\xi}\\[3mm]
-\displaystyle\int_{-1}^{1}\mathbold{\phi}_d\Big|_{\xi=1}~\md{\eta}\\[3mm]
-\displaystyle\int_{-1}^{1}\mathbold{\phi}_d\Big|_{\eta=1}~\md{\xi}\\[3mm]
-\displaystyle\int_{-1}^{1}\mathbold{\phi}_d\Big|_{\xi=-1}~\md{\eta}
+\underset{\numproduct{8x8}}{\mb{G}}=\begin{bmatrix}
+\displaystyle\int_{-1}^{1}\mb{\phi}_d\Big|_{\eta=-1}~\md{\xi}\\[3mm]
+\displaystyle\int_{-1}^{1}\mb{\phi}_d\Big|_{\xi=1}~\md{\eta}\\[3mm]
+\displaystyle\int_{-1}^{1}\mb{\phi}_d\Big|_{\eta=1}~\md{\xi}\\[3mm]
+\displaystyle\int_{-1}^{1}\mb{\phi}_d\Big|_{\xi=-1}~\md{\eta}
 \end{bmatrix}.
 \end{gather}
 
-Assume $\mathbold{G}$ is invertible, then
+Assume $\mb{G}$ is invertible, then
 \begin{gather}\label{eq:interpolation_conforming_answer}
-\mathbold{d}=\mathbold{G}^{-1}\mathbold{Q}\mathbold{\theta},
+\mb{d}=\mb{G}^{-1}\mb{Q}\mb{\theta},
 \end{gather}
-inserting \eqsref{eq:interpolation_conforming_answer} into \eqsref{eq:interpolation_displacement}, $\mathbold{u}_d$ can eventually be expressed by $\mathbold{\theta}$, which consists of four nodal rotations.
+inserting \eqsref{eq:interpolation_conforming_answer} into \eqsref{eq:interpolation_displacement}, $\mb{u}_d$ can eventually be expressed by $\mb{\theta}$, which consists of four nodal rotations.
 \begin{gather}
-\mathbold{u}_d=\mathbold{\phi}_d\mathbold{d}=\mathbold{\phi}_d\mathbold{G}^{-1}\mathbold{Q}\mathbold{\theta}.
+\mb{u}_d=\mb{\phi}_d\mb{d}=\mb{\phi}_d\mb{G}^{-1}\mb{Q}\mb{\theta}.
 \end{gather}
 
-Then \eqsref{eq:decompose_deformation} can be reinterpreted by $\mathbold{q}_t$ and $\mathbold{\theta}$,
+Then \eqsref{eq:decompose_deformation} can be reinterpreted by $\mb{q}_t$ and $\mb{\theta}$,
 \begin{gather}
-\mathbold{u}=\mathbold{u}_t+\mathbold{u}_d=\mathbold{\phi}_t\mathbold{q}_t+\mathbold{\phi}_d\mathbold{G}^{-1}\mathbold{Q}\mathbold{\theta}.
+\mb{u}=\mb{u}_t+\mb{u}_d=\mb{\phi}_t\mb{q}_t+\mb{\phi}_d\mb{G}^{-1}\mb{Q}\mb{\theta}.
 \end{gather}
 Accordingly,
 \begin{gather*}
-\mathbold{\phi}_u=\begin{bmatrix}
-\mathbold{\phi}_t&\mathbold{\phi}_d\mathbold{G}^{-1}\mathbold{Q}
+\mb{\phi}_u=\begin{bmatrix}
+\mb{\phi}_t&\mb{\phi}_d\mb{G}^{-1}\mb{Q}
 \end{bmatrix},\qquad
-\mathbold{q}=\begin{bmatrix}
-\mathbold{q}_t&\mathbold{\theta}
+\mb{q}=\begin{bmatrix}
+\mb{q}_t&\mb{\theta}
 \end{bmatrix}^\mT.
 \end{gather*}
-The order of $\mathbold{q}$ could be rearranged to match corresponding DoF encoding rule. As there is no additional constraint imposed, $\mathbold{G}$ could be singular, hence a careful construction of $\mathbold{\phi}_d$ is required to avoid singularity.
+The order of $\mb{q}$ could be rearranged to match corresponding DoF encoding rule. As there is no additional constraint imposed, $\mb{G}$ could be singular, hence a careful construction of $\mb{\phi}_d$ is required to avoid singularity.
 \subsection{Stress}
 The stress modes can be derived from the Airy stress function, as a common practice that has been used in prior research \citep[see, e.g.,][]{Fu2010,Cen2011,Nodargi2017}.
 \begin{gather}
-\mathbold{\sigma}=\begin{bmatrix}
+\mb{\sigma}=\begin{bmatrix}
 	\sigma_x & \sigma_y & \tau_{xy}
-\end{bmatrix}^\mT=\mathbold{\phi}_\sigma\mathbold{\alpha},
+\end{bmatrix}^\mT=\mb{\phi}_\sigma\mb{\alpha},
 \end{gather}
-with $\mathbold{\alpha}=\begin{bmatrix}
+with $\mb{\alpha}=\begin{bmatrix}
 	\alpha_1 & \alpha_2 & \alpha_3 & \cdots & \alpha_{11}
-\end{bmatrix}^\mT$. The shape function $\mathbold{\phi}_\sigma$ can be explicitly shown as in \eqsref{fig:interpolation_stress},
+\end{bmatrix}^\mT$. The shape function $\mb{\phi}_\sigma$ can be explicitly shown as in \eqsref{fig:interpolation_stress},
 \begin{gather}\label{fig:interpolation_stress}
-\mathbold{\phi}_\sigma=
+\mb{\phi}_\sigma=
 \left[\begin{array}{ccc|cc|cc|cc|cc}
 	1 & 0 & 0 & 0 & y & 0  & x  &  0   & 2xy  &   -x^2   & 2y^2-x^2 \\
 	0 & 1 & 0 & x & 0 & y  & 0  & 2xy  &  0   & 2x^2-y^2 &   -y^2   \\
 	0 & 0 & 1 & 0 & 0 & -x & -y & -x^2 & -y^2 &   2xy    &   2xy
 \end{array}\right].
 \end{gather}
-The chosen $\mathbold{\phi}_\sigma$ is complete up to second order. Compared to the one adopted by \citet{Fu2010}, which can be referred to for a detailed derivation, the last two columns are however different --- a symmetric pair is chosen here. Once the Jacobian matrix is known, $\mathbold{\sigma}$ can be conveniently expressed as a function of parent coordinates $\xi$ and $\eta$.
+The chosen $\mb{\phi}_\sigma$ is complete up to second order. Compared to the one adopted by \citet{Fu2010}, which can be referred to for a detailed derivation, the last two columns are however different --- a symmetric pair is chosen here. Once the Jacobian matrix is known, $\mb{\sigma}$ can be conveniently expressed as a function of parent coordinates $\xi$ and $\eta$.
 \subsection{Strain}
 The strain field is interpolated in a similar way,
 \begin{gather}
-\mathbold{\varepsilon}=\begin{bmatrix}
+\mb{\varepsilon}=\begin{bmatrix}
 	\varepsilon_x & \varepsilon_y & \gamma_{xy}
-\end{bmatrix}^\mT=\mathbold{\phi}_\varepsilon\mathbold{\beta}=\mathbold{C}\mathbold{\phi}_\sigma\mathbold{\beta},
+\end{bmatrix}^\mT=\mb{\phi}_\varepsilon\mb{\beta}=\mb{C}\mb{\phi}_\sigma\mb{\beta},
 \end{gather}
-with $\mathbold{\beta}=\begin{bmatrix}
+with $\mb{\beta}=\begin{bmatrix}
 	\beta_1 & \beta_2 & \beta_3 & \cdots & \beta_{11}
-\end{bmatrix}^\mT$. For isotropic materials, the constant matrix $\mathbold{C}$ is chosen to be dependent on Poisson's ratio $\nu$,
+\end{bmatrix}^\mT$. For isotropic materials, the constant matrix $\mb{C}$ is chosen to be dependent on Poisson's ratio $\nu$,
 \begin{gather}\label{poisson_mat}
-\mathbold{C}=\begin{bmatrix}
+\mb{C}=\begin{bmatrix}
 	1    & -\nu & 0      \\
 	-\nu & 1    & 0      \\
 	0    & 0    & 2+2\nu
 \end{bmatrix}.
 \end{gather}
-In such a manner, the Poisson effect can be correctly described. It can be noted that $\mathbold{C}$ is actually part of the flexibility matrix of elastic isotropic plane stress materials. For plane strain, the Poisson's ratio $\nu$ in \eqsref{poisson_mat} shall be replaced by $\nu/(1-\nu)$. In anisotropic cases, $\mathbold{C}$ could be modified accordingly by introducing additional material constants.
+In such a manner, the Poisson effect can be correctly described. It can be noted that $\mb{C}$ is actually part of the flexibility matrix of elastic isotropic plane stress materials. For plane strain, the Poisson's ratio $\nu$ in \eqsref{poisson_mat} shall be replaced by $\nu/(1-\nu)$. In anisotropic cases, $\mb{C}$ could be modified accordingly by introducing additional material constants.
 
-Practically the variability of Poisson's ratio is often ignored, hence a constant around \num{0.3} can be used for both elastic and elasto-plastic applications, if element has no access to material constants. The purpose of $\mathbold{C}$ is to bond interpolation parameters $\mathbold{\beta}$ to physical deformation. For example, the first three parameters ($\beta_1$, $\beta_2$ and $\beta_3$) now represent uniform tension along two global axes and uniform shear deformation of element. An identity matrix could also be chosen as $\mathbold{C}$ for brevity so that only one of $\mathbold{\phi}_\varepsilon=\mathbold{\phi}_\sigma$ needs to be stored, although the resulting element is \textbf{no more insensitive} to volumetric locking.
+Practically the variability of Poisson's ratio is often ignored, hence a constant around \num{0.3} can be used for both elastic and elasto-plastic applications, if element has no access to material constants. The purpose of $\mb{C}$ is to bond interpolation parameters $\mb{\beta}$ to physical deformation. For example, the first three parameters ($\beta_1$, $\beta_2$ and $\beta_3$) now represent uniform tension along two global axes and uniform shear deformation of element. An identity matrix could also be chosen as $\mb{C}$ for brevity so that only one of $\mb{\phi}_\varepsilon=\mb{\phi}_\sigma$ needs to be stored, although the resulting element is \textbf{no more insensitive} to volumetric locking.
 \subsection{Enhanced Strain}
-Instead of the aforementioned full orthogonality condition, to pass patch test, enhanced strain $\hat{\mathbold{\varepsilon}}$ only needs to satisfy the following condition \citep{Simo1990,Taylor1976},
+Instead of the aforementioned full orthogonality condition, to pass patch test, enhanced strain $\hat{\mb{\varepsilon}}$ only needs to satisfy the following condition \citep{Simo1990,Taylor1976},
 \begin{gather*}
-\int_V\left\langle\mathbold{\sigma}^*,\hat{\mathbold{\varepsilon}}\right\rangle~\md{V}=\int_V\hat{\mathbold{\varepsilon}}^\mT\mathbold{\sigma}^*~\md{V}=\int_V\mathbold{\sigma}^{*,\mT}\hat{\mathbold{\varepsilon}}~\md{V}=0,
+\int_V\left\langle\mb{\sigma}^*,\hat{\mb{\varepsilon}}\right\rangle~\md{V}=\int_V\hat{\mb{\varepsilon}}^\mT\mb{\sigma}^*~\md{V}=\int_V\mb{\sigma}^{*,\mT}\hat{\mb{\varepsilon}}~\md{V}=0,
 \end{gather*}
-where $\mathbold{\sigma}^*$ denotes a \textbf{constant} stress field that is frame invariant. Given that $\mathbold{\zeta}$ is arbitrary and $\hat{\mathbold{\varepsilon}}$ needs to be transformed to the global reference frame before evaluating the integral, it is equivalent to express the above condition as
+where $\mb{\sigma}^*$ denotes a \textbf{constant} stress field that is frame invariant. Given that $\mb{\zeta}$ is arbitrary and $\hat{\mb{\varepsilon}}$ needs to be transformed to the global reference frame before evaluating the integral, it is equivalent to express the above condition as
 \begin{gather}\label{eq:final_enhanced_strain}
-\int_V\mathbold{\phi}_{\hat{\varepsilon}}^g~\md{V}=\mathbold{0},
+\int_V\mb{\phi}_{\hat{\varepsilon}}^g~\md{V}=\mb{0},
 \end{gather}
-where $\mathbold{\phi}_{\hat{\varepsilon}}^g$ denotes the corresponding global interpolation function so that $\hat{\mathbold{\varepsilon}}^g=\mathbold{\phi}_{\hat{\varepsilon}}^g\mathbold{\zeta}$. By default $\mathbold{\phi}_{\hat{\varepsilon}}$ denotes the interpolation in the parent coordinate system, the required $\mathbold{\phi}_{\hat{\varepsilon}}^g$ can be obtained by the following transformation
+where $\mb{\phi}_{\hat{\varepsilon}}^g$ denotes the corresponding global interpolation function so that $\hat{\mb{\varepsilon}}^g=\mb{\phi}_{\hat{\varepsilon}}^g\mb{\zeta}$. By default $\mb{\phi}_{\hat{\varepsilon}}$ denotes the interpolation in the parent coordinate system, the required $\mb{\phi}_{\hat{\varepsilon}}^g$ can be obtained by the following transformation
 \begin{gather}\label{eq:enhanced_strain_trans}
-\mathbold{\phi}_{\hat{\varepsilon}}^g=\mathbold{F}_0\mathbold{\phi}_{\hat{\varepsilon}},
+\mb{\phi}_{\hat{\varepsilon}}^g=\mb{F}_0\mb{\phi}_{\hat{\varepsilon}},
 \end{gather}
-where $\mathbold{F}_0$ is the transformation matrix that depends on the corresponding Jacobian $\mathbold{J}_0$ evaluated at $\xi=\eta=0$. Such a transformation is also used in previous elements \citep[e.g.,][]{Pian1984}.
+where $\mb{F}_0$ is the transformation matrix that depends on the corresponding Jacobian $\mb{J}_0$ evaluated at $\xi=\eta=0$. Such a transformation is also used in previous elements \citep[e.g.,][]{Pian1984}.
 
-Let $\mathbold{J}_0$ be denoted as
+Let $\mb{J}_0$ be denoted as
 \begin{gather*}
-\mathbold{J}_0=\begin{bmatrix}
+\mb{J}_0=\begin{bmatrix}
 \pfrac{x}{\xi}&\pfrac{y}{\xi}\\[3mm]
 \pfrac{x}{\eta}&\pfrac{y}{\eta}
 \end{bmatrix}=\begin{bmatrix}
@@ -590,17 +579,17 @@ J_{11}&J_{12}\\[2mm]
 J_{21}&J_{22}
 \end{bmatrix},
 \end{gather*}
-then $\mathbold{F}_0$ can be expressed as
+then $\mb{F}_0$ can be expressed as
 \begin{gather}
-\mathbold{F}_0=\begin{bmatrix}
+\mb{F}_0=\begin{bmatrix}
 	J_{11}^2     & J_{21}^2     & 2J_{11}J_{21}             \\
 	J_{12}^2     & J_{22}^2     & 2J_{12}J_{22}             \\
 	J_{11}J_{12} & J_{21}J_{22} & J_{11}J_{22}+J_{12}J_{21}
 \end{bmatrix}.
 \end{gather}
-Since $\mathbold{F}_0$ is constant, \eqsref{eq:final_enhanced_strain} becomes
+Since $\mb{F}_0$ is constant, \eqsref{eq:final_enhanced_strain} becomes
 \begin{gather}\label{eq:new_enhanced_strain}
-\int_V\mathbold{\phi}_{\hat{\varepsilon}}~\md{V}=\mathbold{0}.
+\int_V\mb{\phi}_{\hat{\varepsilon}}~\md{V}=\mb{0}.
 \end{gather}
 
 It shall be noted that for the final stiffness matrix to be non-singular, the following condition should be met,
@@ -609,21 +598,21 @@ n_\sigma\geqslant{}n_u+n_{\hat{\varepsilon}}-n_r,
 \end{gather}
 in which $n_\sigma$, $n_u$, $n_{\hat{\varepsilon}}$ are the numbers of modes of corresponding fields and $n_r$ is the number of rigid body modes. In this work, $n_\sigma=11$, $n_u=8+4=12$ and $n_r=4$ (instead of \num{3} due to that the rotation field is assumed to be an independent field), this leads to $n_{\hat{\varepsilon}}\leqslant3$.
 
-The complete cubic polynomials $\mathbold{\phi}$ include ten terms
+The complete cubic polynomials $\mb{\phi}$ include ten terms
 \begin{gather*}
-\mathbold{\phi}=\begin{bmatrix}
+\mb{\phi}=\begin{bmatrix}
 1&\xi&\eta&\xi\eta&\xi^2&\eta^2&\xi^3&\xi^2\eta&\xi\eta^2&\eta^3
 \end{bmatrix}.
 \end{gather*}
 The integration of which gives
 \begin{gather*}
-\int_{S}\mathbold{\phi}~\md{S}=\int_{-1}^{1}\int_{-1}^{1}\mathbold{\phi}~\md{\xi}\md{\eta}=\begin{bmatrix}
+\int_{S}\mb{\phi}~\md{S}=\int_{-1}^{1}\int_{-1}^{1}\mb{\phi}~\md{\xi}\md{\eta}=\begin{bmatrix}
 	4 & 0 & 0 & 0 & \dfrac{4}{3} & \dfrac{4}{3} & 0 & 0 & 0 & 0
 \end{bmatrix}.
 \end{gather*}
 This indicates that terms $\xi$, $\eta$, $\xi\eta$, $\xi^3$, $\eta^3$, $\xi^2\eta$ and $\xi\eta^2$ can be freely combined as (part of) enhanced strain modes. For the remaining terms, following combinations are admissible: $3\xi^2-1$, $3\eta^2-1$ and $\xi^2-\eta^2$. By replacing the original terms with the admissible ones, one can obtain
 \begin{gather}\label{eq:enhanced_basis}
-\mathbold{\phi}=\left[\begin{array}{cc|cccc|cccc}
+\mb{\phi}=\left[\begin{array}{cc|cccc|cccc}
 \xi&\eta&\xi\eta&3\xi^2-1&3\eta^2-1&\xi^2-\eta^2&\xi^3&\xi^2\eta&\xi\eta^2&\eta^3
 \end{array}\right].
 \end{gather}
@@ -631,23 +620,23 @@ For the purpose of satisfying \eqsref{eq:new_enhanced_strain} \textbf{only}, lin
 
 Accounting for both computational efficiency and element performance, after extensive numerical experiments, the following mode is chosen.
 \begin{gather}\label{eq:interpolation_enhanced_strain_modified}
-\mathbold{\phi}_{\hat{\varepsilon}}=
+\mb{\phi}_{\hat{\varepsilon}}=
 \begin{bmatrix}
 	3\xi^2-1  \\
 	3\eta^2-1 \\
 	0
 \end{bmatrix}.
 \end{gather}
-It is observed that displacement terms $\xi^3$ and $\eta^3$ do not show up in the final explicit expression of $\mathbold{u}_d$ along two axes, respectively. The chosen terms $3\xi^2-1$ and $3\eta^2-1$ correspond to those missing terms. It shall be noted that $\mathbold{\phi}_{\hat{\varepsilon}}$ could have at most three columns. Here only one example is shown for brevity.
+It is observed that displacement terms $\xi^3$ and $\eta^3$ do not show up in the final explicit expression of $\mb{u}_d$ along two axes, respectively. The chosen terms $3\xi^2-1$ and $3\eta^2-1$ correspond to those missing terms. It shall be noted that $\mb{\phi}_{\hat{\varepsilon}}$ could have at most three columns. Here only one example is shown for brevity.
 \subsection{Remarks}
 Several remarks can be presented as follows to close this section.
 \begin{enumerate}
-\item The strain field $\mathbold{\varepsilon}$ and the stress field $\mathbold{\sigma}$, which are complete up to second order, are interpolated in the global coordinate system. Once the Jacobian matrix is obtained, interpolation matrices $\mathbold{\phi}_\mathbold{\sigma}$ and $\mathbold{\phi}_\mathbold{\varepsilon}$ can be expressed with parent coordinates. The corresponding integrals can then be evaluated in the normalized (parent) coordinate system.
-\item Although term $\hat{\mathbold{\varepsilon}}$ is named as enhanced strain, it does not correspond to any physical strain. It can be simply deemed as the `additional energy dissipater' that can absorb unwanted energy.
-\item The displacement field $\mathbold{u}$ and the enhanced strain field $\hat{\mathbold{\varepsilon}}$ are interpolated directly in the parent coordinate system. More enhanced strain patterns can be chosen. However, they should be carefully constructed otherwise the performance may deteriorate.
+\item The strain field $\mb{\varepsilon}$ and the stress field $\mb{\sigma}$, which are complete up to second order, are interpolated in the global coordinate system. Once the Jacobian matrix is obtained, interpolation matrices $\mb{\phi}_{\mb{\sigma}}$ and $\mb{\phi}_{\mb{\varepsilon}}$ can be expressed with parent coordinates. The corresponding integrals can then be evaluated in the normalized (parent) coordinate system.
+\item Although term $\hat{\mb{\varepsilon}}$ is named as enhanced strain, it does not correspond to any physical strain. It can be simply deemed as the `additional energy dissipater' that can absorb unwanted energy.
+\item The displacement field $\mb{u}$ and the enhanced strain field $\hat{\mb{\varepsilon}}$ are interpolated directly in the parent coordinate system. More enhanced strain patterns can be chosen. However, they should be carefully constructed otherwise the performance may deteriorate.
 \end{enumerate}
 \section{Integration Scheme}
-To integrate a cubic function, theoretically a two-point Gaussian quadrature is sufficient. However, for the proposed GCMQ element, a \num{2x2} scheme can only provide six constraints while the total number of DoFs is twelve with four rigid body modes\footnote{The additional one rigid body mode is caused by the independent rotation field.}. To avoid additional treatments (e.g., isolation and suppression of zero energy modes), the number of integration points shall increase. The simplest solution is to use the \num{3x3} Gaussian/Lobatto quadrature.
+To integrate a cubic function, theoretically a two-point Gaussian quadrature is sufficient. However, for the proposed GCMQ element, a \numproduct{2x2} scheme can only provide six constraints while the total number of DoFs is twelve with four rigid body modes\footnote{The additional one rigid body mode is caused by the independent rotation field.}. To avoid additional treatments (e.g., isolation and suppression of zero energy modes), the number of integration points shall increase. The simplest solution is to use the \numproduct{3x3} Gaussian/Lobatto quadrature.
 
 In fact, to provide two more constraints, only one additional integration point is required. Hence it would be appealing if a five-point scheme (instead of a nine-point scheme) can be applied as in that case, the computation cost could be roughly halved.
 
@@ -722,7 +711,7 @@ Altering the position of the centre node shows that all three versions of GCMQ c
 Numerical results are shown in \tabref{tab:patch_ii_a}. Clearly, as can be proved by both horizontal and vertical (not shown here for brevity) displacement of the centre node, the linear displacement field is produced by GCMQ. The constant stress field with components $\sigma_x=2$ and $\sigma_y=\tau_{xy}=0$ is also produced in all cases listed.
 \subsection{Shear and Volumetric Locking}
 \subsubsection{MacNeal's Thin Beam}
-The MacNeal's thin beam \citep{MacNeal1985} is used for shear locking test. The geometry is \num{0.2x6} with three different meshes as shown in \figref{example:macneals_beam} where $t$ is beam thickness, $E$ is elastic modulus and $\nu$ is Poisson's ratio. Two loads ($P$ and $M$) are applied at the free end. The unit shear load $P$ is evenly split on two end nodes while the moment load $M$ is applied in the form of concentrated force pair.
+The MacNeal's thin beam \citep{MacNeal1985} is used for shear locking test. The geometry is \numproduct{0.2x6} with three different meshes as shown in \figref{example:macneals_beam} where $t$ is beam thickness, $E$ is elastic modulus and $\nu$ is Poisson's ratio. Two loads ($P$ and $M$) are applied at the free end. The unit shear load $P$ is evenly split on two end nodes while the moment load $M$ is applied in the form of concentrated force pair.
 \begin{figure}[H]
 \centering\scriptsize
 \begin{tikzpicture}
@@ -926,7 +915,7 @@ where $p$ is the pressure, $R_1$ is the inner radius and $R_2$ is the outer radi
 u=\dfrac{3}{4}\left(1+\nu\right)\left(5-\nu\right),
 \end{gather}
 
-Numerical results with different Poisson's ratios are shown in \tabref{tab:cylinder}. No volumetric locking is observed as the error stays around the same level (\SI{3}{\percent}) for all valid Poisson's ratios. The numerical failure is caused due to ill-conditioned stiffness matrix, rather than the element formulation. In fact, GCMQ accepts completely incompressible material, viz., $\nu=0.5$, in which case, the corresponding $\mathbold{C}$ matrix is well-conditioned.
+Numerical results with different Poisson's ratios are shown in \tabref{tab:cylinder}. No volumetric locking is observed as the error stays around the same level (\SI{3}{\percent}) for all valid Poisson's ratios. The numerical failure is caused due to ill-conditioned stiffness matrix, rather than the element formulation. In fact, GCMQ accepts completely incompressible material, viz., $\nu=0.5$, in which case, the corresponding $\mb{C}$ matrix is well-conditioned.
 \begin{table}[htb]
 \centering\footnotesize
 \caption{radial displacement at inner radius of thick-walled cylinder}\label{tab:cylinder}
@@ -1080,7 +1069,7 @@ The Cook's skew beam \citep{Cook1987} shown in \figref{fig:cooks} is a popular e
 \end{tikzpicture}
 \caption{Cook's skew beam}\label{fig:cooks}
 \end{figure}
-Numerical results are shown in \tabref{table:cooks}. Similar to the previous curved beam, GCMQ shows a good coarse mesh accuracy. For a \num{4x4} mesh grid, GCMQ can produce the best result compared to all existing four-node membranes. Since the distribution of the end force is not given, a uniformly distributed pattern is assumed. Better results can be obtained by averaging tip deflections for dense mesh grids.
+Numerical results are shown in \tabref{table:cooks}. Similar to the previous curved beam, GCMQ shows a good coarse mesh accuracy. For a \numproduct{4x4} mesh grid, GCMQ can produce the best result compared to all existing four-node membranes. Since the distribution of the end force is not given, a uniformly distributed pattern is assumed. Better results can be obtained by averaging tip deflections for dense mesh grids.
 \begin{table}[htb]
 \centering\scriptsize
 \caption{averaged tip deflection and error of Cook's skew beam}\label{table:cooks}
@@ -1457,7 +1446,7 @@ The following strategies are used in design of GCMQ:
 
 With the presence of drilling DoFs and mixed framework, the proposed GCMQ element could be used in both simple and complex models with elastoplastic materials. It could be concluded that with the same mesh configuration, compared with other similar elements, the proposed GCMQ element can predict better results and is less sensitive to slight/moderate mesh distortion. The element is also free from shear locking and volumetric locking. Meanwhile, since stress and strain fields are explicitly interpolated in GCMQ, analysts can directly recover stress and strain distributions using interpolation parameters so that unreliable extrapolation methods can be avoided.
 
-For efficiency, a modified five-point integration scheme is proposed to minimise computational cost. It can be seen that such a scheme is accurate for general linear applications but is sensitive to severe mesh distortion. In that case, analysts are recommended to use a \num{3x3} Lobatto quadrature. It could also be observed from examples that the performance of GCMQ is consistently slightly stiffer than the true solution. It shall be noted that no empirical artificial parameter that may affect the performance exists in the presented formulation.
+For efficiency, a modified five-point integration scheme is proposed to minimise computational cost. It can be seen that such a scheme is accurate for general linear applications but is sensitive to severe mesh distortion. In that case, analysts are recommended to use a \numproduct{3x3} Lobatto quadrature. It could also be observed from examples that the performance of GCMQ is consistently slightly stiffer than the true solution. It shall be noted that no empirical artificial parameter that may affect the performance exists in the presented formulation.
 
 The GCMQ element has been implemented in \texttt{suanPan} \citep{Chang2018}. All examples used in this paper can be found online\footnote{https://github.com/TLCFEM/gcmq-ijnme}. It is also available as a dynamic link library on the finite element analysis platform OpenSees\footnote{http://opensees.berkeley.edu/}. The binary files and source code can be downloaded from the corresponding repository\footnote{https://github.com/TLCFEM/gcmq-opensees-implementation}.
 \section*{Acknowledgement}

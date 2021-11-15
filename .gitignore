@@ -1,0 +1,13 @@
+*.aux
+*.log
+*.synctex.gz
+*.out
+*.thm
+*.toc
+*.lot
+*.lof
+*.bbl
+*.blg
+*.bak
+INTRO.pdf
+PICCOMPILATION.pdf
