@@ -9,7 +9,7 @@ jobs:
         uses: xu-cheng/texlive-action/full@v1
         with:
           run: |
-            pdflatex -synctex=1 -interaction=nonstopmode FORMULATION.tex
+            latexmk -pdf
       - name: Release
         uses: svenstaro/upload-release-action@v2
         with:
