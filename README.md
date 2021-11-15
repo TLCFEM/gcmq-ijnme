@@ -1,6 +1,6 @@
 # Generalized Conforming Mixed Quadrilateral (GCMQ)
 
-This repository contains the source code and example models of paper [10.1002/nme.6066](doi.org/10.1002/nme.6066).
+This repository contains the source code and example models of paper [10.1002/nme.6066](https://doi.org/10.1002/nme.6066).
 
 To cite or reproduce figures in the paper, you can unzip the archive, find the corresponding figure and copy the source code in your work.
 
